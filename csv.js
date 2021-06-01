@@ -1,281 +1,259 @@
-const getCSV = require('get-csv');
+const getCSV = require('get-csv')
+const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const date_format = new Date();
-const est_date = date_format.toLocaleString('en-ZA', {timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'});
+const today = new Date(2020, 0, 3, 1)
+const csvDate = today.toLocaleString('en-ZA', {
+  timeZone: 'UTC',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+})
 
-const year = est_date.substr(6, 4);
-const month = est_date.substr(0, 2);
-const day = est_date.substr(3, 2);
+const csvYear = csvDate.substr(0,4)
+const csvMonth = csvDate.substr(5,2)
+const csvDay = csvDate.substr(8,2)
+const csvUrl = "https://api.dmg-inc.com/reports/download/" + csvYear + "/" + csvMonth + "/" + csvDay;
 
-const csvUrl = "https://api.dmg-inc.com/reports/download/" + year + "/" + month + "/" + day;
-console.log(csvUrl);
-getCSV( csvUrl )
-  .then(rows => console.log(rows));
+async function import_csv() {
+  console.log("Fetching CSV [" + csvYear + "/" + csvMonth + "/" + csvDay + "]...")
+  const members = await get_csv()
+  console.log("Got CSV!")
+  console.log("Inserting & updating members in database...")
+  const all_db_changes = await update_and_insert_members(members)
+  const new_members = all_db_changes[0]
+  const updated_fields = all_db_changes[1]
+  const updated_members = [...new Set(updated_fields)];
+  console.log("Done!")
+  console.log("Inserted " + new_members.length + " new members into database")
+  console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
+  db.pool.end()
+}
+import_csv()
 
-let members=[]; // Array to store Members Objects
-
-// export the members so we can use it in index
-exports.members = members;
-
-// get the csv and assign values to object Member
+// get the csv and return members array with Member objects
 function get_csv() {
-  // gets the csv and logs it
-  getCSV(csvUrl)
-    .then( data => {
-      let e;// Will be a Member Object
-      data.forEach((row)=>{
-          e=new Member();// New Member Object
-          Object.assign(e,row);// Assign json to the new Member
-          members.push(e);// Add the Member to the Array
+  let members = []
+  return getCSV(csvUrl)
+    .then((csvData) => {
+      let member // Will be a Member Object
+      csvData.forEach((row) => {
+        member = new Member() // New Member Object
+        Object.assign(member, row) // Assign json to the new Member
+        if (member.post_count == '') member.post_count = 0
+        if (member.rep == '') member.rep = 0
+        if (member.strikes == '') member.strikes = 0
+        if (member.honors == '') member.honors = 0
+        if (member.events == '') member.ev_tm = 0
+        members.push(member)
       });
-    }).then(()=>{
-      // Output the names of the Members
-      members.forEach((em)=>{
-          console.log(em.id + ": " + em.name + ", " + em.country + ", " + em.joined + ", " + em.cohort);// Invoke the Name getter
-      });
-    });
-    return members;
+      return members
+    })
+    .catch(error => console.error(error.stack))
 }
 
-/* Member object
-Fields:
-- [int] id
-- [array] name
-- [string] country
-- [date] joined
-- [array] cohort
-- [array] house
-- [array] division
-- [array] team
-- [array] roster
-- [array] rank
-- [array] position
-- [int] posts
-- [int] total_rep
-- [int] strikes
-- [int] hp
-- [array] manager
-- [array] primary_game
-- [array] skill_tier
-- [array] vanguard
-- [array] last_forum_activity
-- [array] last_discord_activity
-- [array] rep (daily values)
-- [array] events_attended (daily values)
-- [array] events_hosted (daily values)
-- [array] recruits (daily values)
-- [int] reliability
-- [array] comp_events_attended (daily values)
-- [array] discord_hours (daily values)
-*/
-class Member {
-  set id( id ){
-    this._id = id;
+// update member fields in database
+async function update_and_insert_members(members) {
+  let member, is_already_in_db, db_member, member_forum_date, member_inserted
+  let members_updated_and_inserted = [], members_updated = [], members_inserted = []
+  for (let i in members) {
+    member = members[i]
+    if (member.member_id != '') {
+      db_member = await is_member_in_db(member.member_id)
+      if (member instanceof Member && db_member) {
+        // if fields change, call the necessary functions to update the database
+        // columns change too, so when CSV is altered come back here!
+        if (member.member_name != db_member.name) {
+          update_name(member.member_id, member.member_name, db_member.name)
+          members_updated.push(member.member_id)
+        }
+        if (member.country != db_member.country) {
+          update_country(member.member_id, member.country, db_member.country)
+          members_updated.push(member.member_id)
+        }
+        if (member.cohort != db_member.cohort) {
+          update_cohort(member.member_id, member.cohort, db_member.cohort)
+          members_updated.push(member.member_id)
+        }
+        if (member.division != db_member.division) {
+          update_division(member.member_id, member.division, db_member.division)
+          members_updated.push(member.member_id)
+        }
+        if (member.team != db_member.team) {
+          update_team(member.member_id, member.team, db_member.team)
+          members_updated.push(member.member_id)
+        }
+        if (member.member_rank != db_member.rank) {
+          update_rank(member.member_id, member.member_rank, db_member.rank)
+          members_updated.push(member.member_id)
+        }
+        if (member.position != db_member.position) {
+          update_position(member.member_id, member.position, db_member.position)
+          members_updated.push(member.member_id)
+        }
+        if (member.post_count != db_member.posts) {
+          update_posts(member.member_id, member.post_count, db_member.posts)
+          members_updated.push(member.member_id)
+        }
+        if (member.rep != db_member.rep) {
+          update_rep(member.member_id, member.rep, db_member.rep)
+          members_updated.push(member.member_id)
+        }
+        if (member.strikes != db_member.strikes) {
+          update_strikes(member.member_id, member.strikes, db_member.strikes)
+          members_updated.push(member.member_id)
+        }
+        if (member.honors != db_member.hp) {
+          update_hp(member.member_id, member.honors, db_member.hp)
+          members_updated.push(member.member_id)
+        }
+        // dates in js are weird so I convert member.last_activity to UTC Date but
+        // set the Hours to 1 so it stays the same day (otherwise becomes 23.00 and goes back one day)
+        // that way we can compare to the db object field db_member.last_forum_activity which is only date (without time)
+        member_forum_date = new Date(member.last_activity)
+        member_forum_date.setHours(1,0,0,0)
+        db_member.last_forum_activity.setHours(1,0,0,0)
+        if (member_forum_date.toJSON() != db_member.last_forum_activity.toJSON()) {
+          update_last_forum_activity(member.member_id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
+          members_updated.push(member.member_id)
+        }
+      }
+      else {
+        member_inserted = await insert_member_into_db(member)
+        if (member_inserted) {
+          members_inserted.push(member_inserted)
+        }
+      }
+    }
   }
-  set name( name ){
-    this._name = name;
-  }
-  set country( country ){
-    this._country = country;
-  }
-  set joined( joined ){
-    this._joined = joined;
-  }
-  set cohort( cohort ){
-    this._cohort = cohort;
-  }
-  set house( house ){
-    this._house = house;
-  }
-  set division( division ){
-    this._division = division;
-  }
-  set team( team ){
-    this._team = team;
-  }
-  set roster( roster ){
-    this._roster = roster;
-  }
-  set rank( rank ){
-    this._rank = rank;
-  }
-  set position( position ){
-    this._position = position;
-  }
-  set posts( posts ){
-    this._posts = posts;
-  }
-  set rep( rep ){
-    this._rep = rep;
-  }
-  set strikes( strikes ){
-    this._strikes = strikes;
-  }
-  set hp( hp ){
-    this._hp = hp;
-  }
-  set manager( manager ){
-    this._manager = manager;
-  }
-  set primary_game( primary_game ){
-    this._primary_game = primary_game;
-  }
-  set skill_tier( skill_tier ){
-    this._skill_tier = skill_tier;
-  }
-  set vanguard( vanguard ){
-    this._vanguard = vanguard;
-  }
-  set last_forum_activity( last_forum_activity ){
-    this._last_forum_activity = last_forum_activity;
-  }
-  set last_discord_activity( last_discord_activity ){
-    this._last_discord_activity = last_discord_activity;
-  }
-  set rep_tm( rep_tm ){
-    this._rep_tm = rep_tm;
-  }
-  set rep_lm( rep_lm ){
-    this._rep_lm = rep_lm;
-  }
-  set events_tm( events_tm ){
-    this._events_tm = events_tm;
-  }
-  set events_lm( events_lm ){
-    this._events_lm = events_lm;
-  }
-  set events_hosted_tm( events_hosted_tm ){
-    this._events_hosted_tm = events_hosted_tm;
-  }
-  set events_hosted_lm( events_hosted_lm ){
-    this._events_hosted_lm = events_hosted_lm;
-  }
-  set recruits_tm( recruits_tm ){
-    this._recruits_tm = recruits_tm;
-  }
-  set recruits_lm( recruits_lm ){
-    this._recruits_lm = recruits_lm;
-  }
-  set reliability( reliability ){
-    this._reliability = reliability;
-  }
-  set comp_events_tm( comp_events_tm ){
-    this._comp_events_tm = comp_events_tm;
-  }
-  set comp_events_lm( comp_events_lm ){
-    this._comp_events_lm = comp_events_lm;
-  }
-  set discord_hours_tm( discord_hours_tm ){
-    this._discord_hours_tm = discord_hours_tm;
-  }
-  set discord_hours_lm( discord_hours_lm ){
-    this._discord_hours_lm = discord_hours_lm;
-  }
+  members_updated_and_inserted.push(members_inserted)
+  members_updated_and_inserted.push(members_updated)
+  return members_updated_and_inserted
+}
 
-  // get
-  get id(){
-    return this._id;
+// insert members in database
+async function insert_member_into_db(member) {
+  let is_already_in_db, db_member
+  if (member.member_id != '' && member.member_rank != 'Applicant') {
+    is_already_in_db = await is_member_in_db(member.member_id)
+    if (member instanceof Member && !is_already_in_db) {
+      db_member = await db.insert_member(member)
+    }
   }
-  get name(){
-    return this._name;
+  return db_member
+}
+
+// check if member exists in database
+async function is_member_in_db(id) {
+  let db_member = await db.get_member_by_id(id)
+  return db_member
+}
+
+// array to be used for member_history table in database
+const db_type_of_changes = ['name', 'country', 'cohort', 'house', 'division', 'team', 'roster', 'rank', 'position', 'posts', 'rep', 'strikes', 'hp', 'manager', 'primary_game', 'skill_tier', 'vanguard', 'last_forum_activity', 'last_discord_activity', 'reliability']
+
+/**
+ *  update member fields
+**/
+// update name
+function update_name(id, name, old_value) {
+  db.update_name(id, name)
+  let type = db_type_of_changes.indexOf('name')
+  db.insert_history(today, id, type, old_value, name)
+}
+
+// update country
+function update_country(id, country, old_value) {
+  db.update_country(id, country)
+  let type = db_type_of_changes.indexOf('country')
+  db.insert_history(today, id, type, old_value, country)
+}
+
+// update cohort
+function update_cohort(id, cohort, old_value) {
+  db.update_cohort(id, cohort)
+  let type = db_type_of_changes.indexOf('cohort')
+  db.insert_history(today, id, type, old_value, cohort)
+}
+
+// update division
+function update_division(id, division, old_value) {
+  db.update_division(id, division)
+  let type = db_type_of_changes.indexOf('division')
+  db.insert_history(today, id, type, old_value, division)
+}
+
+// update team
+function update_team(id, team, old_value) {
+  db.update_team(id, team)
+  let type = db_type_of_changes.indexOf('team')
+  db.insert_history(today, id, type, old_value, team)
+}
+
+// update rank
+function update_rank(id, rank, old_value) {
+  db.update_rank(id, rank)
+  let type = db_type_of_changes.indexOf('rank')
+  db.insert_history(today, id, type, old_value, rank)
+}
+
+// update position
+function update_position(id, position, old_value) {
+  db.update_position(id, position)
+  let type = db_type_of_changes.indexOf('position')
+  db.insert_history(today, id, type, old_value, position)
+}
+
+// update posts
+function update_posts(id, posts, old_value) {
+  db.update_posts(id, posts)
+  let type = db_type_of_changes.indexOf('posts')
+  db.insert_history(today, id, type, old_value, posts)
+}
+
+// update rep
+function update_rep(id, rep, old_value) {
+  db.update_rep(id, rep)
+  let type = db_type_of_changes.indexOf('rep')
+  db.insert_history(today, id, type, old_value, rep)
+}
+
+// update strikes
+function update_strikes(id, strikes, old_value) {
+  db.update_strikes(id, strikes)
+  let type = db_type_of_changes.indexOf('strikes')
+  db.insert_history(today, id, type, old_value, strikes)
+}
+
+// update hp
+function update_hp(id, hp, old_value) {
+  db.update_hp(id, hp)
+  let type = db_type_of_changes.indexOf('hp')
+  db.insert_history(today, id, type, old_value, hp)
+}
+
+// update last_forum_activity
+function update_last_forum_activity(id, last_forum_activity, old_value) {
+  db.update_last_forum_activity(id, last_forum_activity)
+  let type = db_type_of_changes.indexOf('last_forum_activity')
+  db.insert_history(today, id, type, old_value, last_forum_activity)
+}
+
+// daily values
+// update events attended
+function update_latest_events_attended(id, events_attended, old_value) {
+  if (old_value == null) old_value = 0
+  let daily_value = events_attended - old_value
+  if ( csvDay == '01' ) {
+    daily_value = events_attended
   }
-  get country(){
-    return this._country;
+  db.update_latest_events_attended(id, events_attended)
+  if (daily_value > 0 ) {
+    db.insert_events_attended(today, id, daily_value)
   }
-  get joined(){
-    return this._joined;
-  }
-  get cohort(){
-    return this._cohort;
-  }
-  get house(){
-    return this._house;
-  }
-  get division(){
-    return this._division;
-  }
-  get team(){
-    return this._team;
-  }
-  get roster(){
-    return this._roster;
-  }
-  get rank(){
-    return this._rank;
-  }
-  get position(){
-    return this._position;
-  }
-  get posts(){
-    return this._posts;
-  }
-  get rep(){
-    return this._rep;
-  }
-  get strikes(){
-    return this._strikes;
-  }
-  get hp(){
-    return this._hp;
-  }
-  get manager(){
-    return this._manager;
-  }
-  get primary_game(){
-    return this._primary_game;
-  }
-  get skill_tier(){
-    return this._skill_tier;
-  }
-  get vanguards(){
-    return this._vanguard;
-  }
-  get last_forum_activity(){
-    return this._last_forum_activity;
-  }
-  get last_discord_activity(){
-    return this._last_discord_activity;
-  }
-  get rep_tm(){
-    return this._rep_tm;
-  }
-  get rep_lm(){
-    return this._rep_lm;
-  }
-  get events_tm(){
-    return this._events_tm;
-  }
-  get events_lm(){
-    return this._events_lm;
-  }
-  get events_hosted_tm(){
-    return this._events_hosted_tm;
-  }
-  get events_hosted_lm(){
-    return this._events_hosted_lm;
-  }
-  get recruits_tm(){
-    return this._recruits_tm;
-  }
-  get recruits_lm(){
-    return this._recruits_lm;
-  }
-  get reliability(){
-    return this._reliability;
-  }
-  get comp_events_tm(){
-    return this._comp_events_tm;
-  }
-  get comp_events_lm(){
-    return this._comp_events_lm;
-  }
-  get discord_hours_tm(){
-    return this._discord_hours_tm;
-  }
-  get discord_hours_lm(){
-    return this._discord_hours_lm;
-  }
-  constructor(){
-  }
+}
+
+// Member object
+class Member {
+  constructor() {}
 }
