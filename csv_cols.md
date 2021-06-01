@@ -1,4 +1,4 @@
-## Database cols (Members table)
+## Database columns (Members table)
 1. id
 2. name
 3. country
@@ -28,7 +28,7 @@
 27. latest_comp_events_attended
 28. latest_discord_hours
 
-## CSV(v1) Values 2021/01/01 - 2021/01/11 (17 cols)
+## CSV(v1) columns 2020/01/01 - 2020/01/11 (17 cols)
 1. member_id
 2. member_name
 3. country
@@ -47,7 +47,7 @@
 16. commendations
 17. events
 
-## CSV(v2) Values 2021/01/12 - 2020/04/01 (35 cols)
+## CSV(v2) columns 2020/01/12 - 2020/04/01 (35 cols)
 1. id
 2. name
 3. country
@@ -84,7 +84,7 @@
 34. rec_tm
 35. rec_lm
 
-## CSV(v3) Values 2021/04/02 -  (29 cols)
+## CSV(v3) columns 2020/04/02 - 2020/09/05 (29 cols)
 1. id
 2. name
 3. country
@@ -114,3 +114,107 @@
 27. events_hosted_lm
 28. recruits_tm
 29. recruits_lm
+
+## CSV(v4) columns 2020/09/06 - 2020/12/16 (32 cols)
+1. id
+2. name
+3. country
+4. joined
+5. cohort
+6. house
+7. division
+8. team
+9. roster
+10. rank
+11. position
+12. posts
+13. rep
+14. strikes
+15. hp
+16. manager
+17. primary_game
+18. skill_tier
+19. vanguard
+20. last_forum_activity
+21. last_discord_activity
+22. rep_tm
+23. rep_lm
+24. events_tm
+25. events_lm
+26. events_hosted_tm
+27. events_hosted_lm
+28. recruits_tm
+29. recruits_lm
+30. reliability
+31. comp_events_tm
+32. comp_events_lm
+
+## CSV(v5) columns 2020/12/17 - 2021/05/07 (34 cols)
+1. id
+2. name
+3. country
+4. joined
+5. cohort
+6. house
+7. division
+8. team
+9. roster
+10. rank
+11. position
+12. posts
+13. rep
+14. strikes
+15. hp
+16. manager
+17. primary_game
+18. skill_tier
+19. vanguard
+20. last_forum_activity
+21. last_discord_activity
+22. rep_tm
+23. rep_lm
+24. events_tm
+25. events_lm
+26. events_hosted_tm
+27. events_hosted_lm
+28. recruits_tm
+29. recruits_lm
+30. reliability
+31. comp_events_tm
+32. comp_events_lm
+33. discord_hours_tm
+34. discord_hours_lm
+
+## CSV(v6) columns 2021/05/09 - [latest] (32 cols)
+1. id
+2. name
+3. country
+4. joined
+5. cohort
+6. house
+7. division
+8. rank
+9. position
+10. posts
+11. rep
+12. strikes
+13. hp
+14. manager
+15. primary_game
+16. skill_tier
+17. vanguard
+18. last_forum_activity
+19. last_discord_activity
+20. rep_tm
+21. rep_lm
+22. events_tm
+23. events_lm
+24. events_hosted_tm
+25. events_hosted_lm
+26. recruits_tm
+27. recruits_lm
+28. reliability
+29. comp_events_tm
+30. comp_events_lm
+31. discord_hours_tm
+32. discord_hours_lm

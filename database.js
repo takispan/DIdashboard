@@ -17,8 +17,23 @@ const pool = new Pool({
 // postgres automaticall converts uppercase characters to lowercase,
 // so in order to use a table or column with uppercase characters
 // we enclose the word with quotes
-async function insert_member(member) {
+async function insert_csv_log(date, new_members, updated_members, updated_fields, execution_time) {
   // async/await
+  try {
+    const query = {
+      name: 'insert-csv_log',
+      text: 'INSERT INTO public."Csv_log"(date, new_members, updated_members, updated_fields, execution_time) VALUES($1, $2, $3, $4, $5) RETURNING *',
+      values: [date, new_members, updated_members, updated_fields, execution_time],
+    }
+    const res = await pool.query(query)
+    return res.rows[0]
+  } catch (err) {
+    console.log(err.stack)
+    console.log("Error (insert_csv_log)")
+  }
+}
+
+async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',

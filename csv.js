@@ -2,7 +2,7 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const today = new Date(2020, 0, 12, 1)
+const today = new Date(Date.UTC(2020, 3, 1))
 const csvDate = today.toLocaleString('en-ZA', {
   timeZone: 'UTC',
   year: 'numeric',
@@ -16,6 +16,7 @@ const csvDay = csvDate.substr(8,2)
 const csvUrl = "https://api.dmg-inc.com/reports/download/" + csvYear + "/" + csvMonth + "/" + csvDay;
 
 async function import_csv() {
+  const start = performance.now();
   console.log("Fetching CSV [" + csvYear + "/" + csvMonth + "/" + csvDay + "]...")
   const members = await get_csv()
   console.log("Got CSV!")
@@ -28,6 +29,8 @@ async function import_csv() {
   console.log("Inserted " + new_members.length + " new members into database")
   console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
   db.pool.end()
+  const end = performance.now();
+  console.log(`${end - start}ms`);
 }
 import_csv()
 
@@ -44,7 +47,7 @@ function get_csv() {
         if (member.rep == '') member.rep = 0
         if (member.strikes == '') member.strikes = 0
         if (member.hp == '') member.hp = 0
-        // if (member.skill_tier == '') member.skill_tier = 0
+        if (member.skill_tier == '') member.skill_tier = 0
         // if (member.reliability == '') member.reliability = 0
         if (member.rep_tm == '') member.rep_tm = 0
         if (member.ev_tm == '') member.ev_tm = 0
@@ -122,31 +125,35 @@ async function update_and_insert_members(members) {
           update_hp(member.id, member.hp, db_member.hp)
           members_updated.push(member.id)
         }
-        // if (member.manager != db_member.manager) {
-        //   // db.update_manager(id)
-        // }
-        // if (member.primary_game != db_member.primary_game) {
-        //   // db.update_primary_game(id)
-        // }
-        // if (member.skill_tier != db_member.skill_tier) {
-        //   // db.update_skill_tier(id)
-        // }
-        // if (member.vanguard != db_member.vanguard) {
-        //   // db.update_vanguard(id)
-        // }
-        // dates in js are weird so I convert member.last_act to UTC Date but
-        // set the Hours to 1 so it stays the same day (otherwise becomes 23.00 and goes back one day)
-        // that way we can compare to the db object field db_member.last_forum_activity which is only date (without time)
-        member_forum_date = new Date(member.last_act)
-        member_forum_date.setHours(1,0,0,0)
-        db_member.last_forum_activity.setHours(1,0,0,0)
-        if (member_forum_date.toJSON() != db_member.last_forum_activity.toJSON()) {
+        if (member.manager != db_member.manager) {
+          update_manager(member.id, member.manager, db_member.manager)
+          members_updated.push(member.id)
+        }
+        if (member.primary_game != db_member.primary_game) {
+          update_primary_game(member.id, member.primary_game, db_member.primary_game)
+          members_updated.push(member.id)
+        }
+        if (member.skill_tier != db_member.skill_tier) {
+          update_skill_tier(member.id, member.skill_tier, db_member.skill_tier)
+          members_updated.push(member.id)
+        }
+        if (member.vanguard != db_member.vanguard) {
+          update_vanguard(member.id, member.vanguard, db_member.vanguard)
+          members_updated.push(member.id)
+        }
+        // create a date based on csv's field member.last_act
+        // .toDateString() in order to compare only the date parts (csv vs db)
+        // that way we don't need to mess with timezones
+        member_forum_date = new Date(member.last_forum_activity)
+        if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
           update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
           members_updated.push(member.id)
         }
-        // if (member.last_discord_activity.getTime() != db_member.last_discord_activity.getTime()) {
-        //   // db.update_last_discord_activity(id)
-        // }
+        member_discord_date = new Date(member.last_discord_activity)
+        if (member.last_discord_activity.toDateString() != db_member.last_discord_activity.toDateString()) {
+          update_last_discord_activity(member.id, member_discord_date.toJSON(), db_member.last_discord_activity.toJSON())
+          members_updated.push(member.id)
+        }
         // if (member.reliability != db_member.reliability) {
         //   // db.update_reliability(id)
         // }
