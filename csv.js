@@ -75,43 +75,43 @@ async function update_and_insert_members(members) {
       if (member instanceof Member && db_member) {
         // if fields change, call the necessary functions to update the database
         // columns change too, so when CSV is altered come back here!
-        if (member.name != db_member.name) {
+        if (member.name && member.name != db_member.name) {
           update_name(member.id, member.name, db_member.name)
           members_updated.push(member.id)
         }
-        if (member.country != db_member.country) {
+        if (member.country && member.country != db_member.country) {
           update_country(member.id, member.country, db_member.country)
           members_updated.push(member.id)
         }
-        if (member.cohort != db_member.cohort) {
+        if (member.cohort && member.cohort != db_member.cohort) {
           update_cohort(member.id, member.cohort, db_member.cohort)
           members_updated.push(member.id)
         }
-        if (member.division != db_member.division) {
+        if (member.division && member.division != db_member.division) {
           update_division(member.id, member.division, db_member.division)
           members_updated.push(member.id)
         }
-        if (member.rank != db_member.rank) {
+        if (member.rank && member.rank != db_member.rank) {
           update_rank(member.id, member.rank, db_member.rank)
           members_updated.push(member.id)
         }
-        if (member.position != db_member.position) {
+        if (member.position && member.position != db_member.position) {
           update_position(member.id, member.position, db_member.position)
           members_updated.push(member.id)
         }
-        if (member.posts != db_member.posts) {
+        if (member.posts && member.posts != db_member.posts) {
           update_posts(member.id, member.posts, db_member.posts)
           members_updated.push(member.id)
         }
-        if (member.rep != db_member.rep) {
+        if (member.rep && member.rep != db_member.rep) {
           update_rep(member.id, member.rep, db_member.rep)
           members_updated.push(member.id)
         }
-        if (member.strikes != db_member.strikes) {
+        if (member.strikes && member.strikes != db_member.strikes) {
           update_strikes(member.id, member.strikes, db_member.strikes)
           members_updated.push(member.id)
         }
-        if (member.hp != db_member.hp) {
+        if (member.hp && member.hp != db_member.hp) {
           update_hp(member.id, member.hp, db_member.hp)
           members_updated.push(member.id)
         }
@@ -119,7 +119,7 @@ async function update_and_insert_members(members) {
         // .toDateString() in order to compare only the date parts (csv vs db)
         // that way we don't need to mess with timezones
         member_forum_date = new Date(member.last_act)
-        if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
+        if (member.name && member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
           update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
           members_updated.push(member.id)
         }
