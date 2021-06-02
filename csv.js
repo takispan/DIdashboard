@@ -5,8 +5,8 @@ const db = require('./database')
 const today = new Date(Date.UTC(2020, 0, 1))
 const end_date = new Date(Date.UTC(2020, 0, 11))
 
-async function import_csv(start_date, end_date = start_date) {
-  let current_date = start_date
+async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
+  let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
   for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate()+1)) {
     current_csv_date = current_date.toLocaleString('en-ZA', {
