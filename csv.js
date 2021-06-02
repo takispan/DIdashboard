@@ -3,7 +3,7 @@ const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
 const today = new Date(Date.UTC(2020, 0, 1))
-const end_date = new Date(Date.UTC(2020, 0, 11))
+const csv_end_date = new Date(Date.UTC(2020, 0, 11))
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
   let current_date = new Date(start_date.getTime())
@@ -31,11 +31,11 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
     const end = new Date()
     const exec_time = (end - start)/1000
     console.log(exec_time)
-    await db.insert_csv_log(today, new_members.length, updated_members.length, updated_fields.length, exec_time)
+    await db.insert_csv_log(current_date, new_members.length, updated_members.length, updated_fields.length, exec_time)
   }
   db.pool.end()
 }
-import_csv(today, end_date)
+import_csv(today, csv_end_date)
 
 // get the csv and return members array with Member objects
 function get_csv(csvUrl) {
