@@ -119,8 +119,25 @@ async function update_and_insert_members(members) {
         // .toDateString() in order to compare only the date parts (csv vs db)
         // that way we don't need to mess with timezones
         member_forum_date = new Date(member.last_act)
-        if (member.name && member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
+        if (member_forum_date && member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
           update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
+          members_updated.push(member.id)
+        }
+        // daily values!
+        if (member.rep_tm && member.rep_tm != db_member.latest_rep_earned) {
+          update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
+          members_updated.push(member.id)
+        }
+        if (member.ev_tm && member.ev_tm != db_member.latest_events_attended) {
+          update_latest_events_attended(member.id, member.ev_tm, db_member.latest_events_attended)
+          members_updated.push(member.id)
+        }
+        if (member.ev_hosted_tm && member.ev_hosted_tm != db_member.latest_events_hosted) {
+          update_latest_events_hosted(member.id, member.ev_hosted_tm, db_member.latest_events_hosted)
+          members_updated.push(member.id)
+        }
+        if (member.rec_tm && member.rec_tm != db_member.latest_recruits) {
+          update_latest_recruits(member.id, member.rec_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
       }
