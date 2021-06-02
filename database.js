@@ -304,70 +304,6 @@ async function update_hp(id, hp) {
   }
 }
 
-// update manager
-async function update_manager(id, manager) {
-  try {
-    const query = {
-      name: 'update-manager',
-      text: 'UPDATE public."Members" SET manager=$2 WHERE id=$1',
-      values: [id, manager],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_manager)")
-  }
-}
-
-// update primary_game
-async function update_primary_game(id, primary_game) {
-  try {
-    const query = {
-      name: 'update-primary_game',
-      text: 'UPDATE public."Members" SET primary_game=$2 WHERE id=$1',
-      values: [id, primary_game],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_primary_game)")
-  }
-}
-
-// update skill_tier
-async function update_skill_tier(id, skill_tier) {
-  try {
-    const query = {
-      name: 'update-skill_tier',
-      text: 'UPDATE public."Members" SET skill_tier=$2 WHERE id=$1',
-      values: [id, skill_tier],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_skill_tier)")
-  }
-}
-
-// update vanguard
-async function update_vanguard(id, vanguard) {
-  try {
-    const query = {
-      name: 'update-vanguard',
-      text: 'UPDATE public."Members" SET vanguard=$2 WHERE id=$1',
-      values: [id, vanguard],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_vanguard)")
-  }
-}
-
 // update last_forum_activity
 async function update_last_forum_activity(id, last_forum_activity) {
   try {
@@ -381,38 +317,6 @@ async function update_last_forum_activity(id, last_forum_activity) {
   } catch (err) {
     console.log(err.stack)
     console.log("Error (update_last_forum_activity)")
-  }
-}
-
-// update last_discord_activity
-async function update_last_discord_activity(id, last_discord_activity) {
-  try {
-    const query = {
-      name: 'update-last_discord_activity',
-      text: 'UPDATE public."Members" SET last_discord_activity=$2 WHERE id=$1',
-      values: [id, last_discord_activity],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_last_discord_activity)")
-  }
-}
-
-// update reliability
-async function update_reliability(id, reliability) {
-  try {
-    const query = {
-      name: 'update-reliability',
-      text: 'UPDATE public."Members" SET reliability=$2 WHERE id=$1',
-      values: [id, reliability],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_reliability)")
   }
 }
 
@@ -477,38 +381,6 @@ async function update_latest_recruits(id, latest_recruits) {
   } catch (err) {
     console.log(err.stack)
     console.log("Error (update_latest_recruits)")
-  }
-}
-
-// update latest_comp_events_attended
-async function update_latest_comp_events_attended(id, latest_comp_events_attended) {
-  try {
-    const query = {
-      name: 'update-latest_comp_events_attended',
-      text: 'UPDATE public."Members" SET latest_comp_events_attended=$2 WHERE id=$1',
-      values: [id, latest_comp_events_attended],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_latest_comp_events_attended)")
-  }
-}
-
-// update latest_discord_hours
-async function update_latest_discord_hours(id, latest_discord_hours) {
-  try {
-    const query = {
-      name: 'update-latest_discord_hours',
-      text: 'UPDATE public."Members" SET latest_discord_hours=$2 WHERE id=$1',
-      values: [id, latest_discord_hours],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_latest_discord_hours)")
   }
 }
 
@@ -577,41 +449,10 @@ async function insert_recruits(today, id, daily_value) {
   }
 }
 
-// insert comp_events_attended
-async function insert_comp_events_attended(today, id, daily_value) {
-  try {
-    const query = {
-      name: 'insert-comp_events_attended',
-      text: 'INSERT INTO public."Comp_events_attended"(date, value, "memberID") VALUES($1, $2, $3) RETURNING *',
-      values: [today, daily_value, id],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (insert_comp_events_attended)")
-  }
-}
-
-// insert discord_hours
-async function insert_discord_hours(today, id, daily_value) {
-  try {
-    const query = {
-      name: 'insert-discord_hours',
-      text: 'INSERT INTO public."Discord_hours"(date, value, "memberID") VALUES($1, $2, $3) RETURNING *',
-      values: [today, daily_value, id],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (insert_discord_hours)")
-  }
-}
-
 // export
 module.exports = {
   pool,
+  insert_csv_log,
   insert_member,
   get_members,
   get_member_by_id,
@@ -629,23 +470,13 @@ module.exports = {
   update_rep,
   update_strikes,
   update_hp,
-  update_manager,
-  update_primary_game,
-  update_skill_tier,
-  update_vanguard,
   update_last_forum_activity,
-  update_last_discord_activity,
-  update_reliability,
   update_latest_rep_earned,
   update_latest_events_attended,
   update_latest_events_hosted,
   update_latest_recruits,
-  update_latest_comp_events_attended,
-  update_latest_discord_hours,
   insert_rep_earned,
   insert_events_attended,
   insert_events_hosted,
   insert_recruits,
-  insert_comp_events_attended,
-  insert_discord_hours,
 };

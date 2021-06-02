@@ -2,40 +2,43 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const today = new Date(Date.UTC(2020, 3, 1))
-const csvDate = today.toLocaleString('en-ZA', {
-  timeZone: 'UTC',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit'
-})
+const today = new Date(Date.UTC(2020, 0, 1))
+const end_date = new Date(Date.UTC(2020, 0, 11))
 
-const csvYear = csvDate.substr(0,4)
-const csvMonth = csvDate.substr(5,2)
-const csvDay = csvDate.substr(8,2)
-const csvUrl = "https://api.dmg-inc.com/reports/download/" + csvYear + "/" + csvMonth + "/" + csvDay;
-
-async function import_csv() {
-  const start = performance.now();
-  console.log("Fetching CSV [" + csvYear + "/" + csvMonth + "/" + csvDay + "]...")
-  const members = await get_csv()
-  console.log("Got CSV!")
-  console.log("Inserting & updating members in database...")
-  const all_db_changes = await update_and_insert_members(members)
-  const new_members = all_db_changes[0]
-  const updated_fields = all_db_changes[1]
-  const updated_members = [...new Set(updated_fields)];
-  console.log("Done!")
-  console.log("Inserted " + new_members.length + " new members into database")
-  console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
+async function import_csv(start_date, end_date = start_date) {
+  let current_date = start_date
+  let current_csv_date, csvUrl
+  for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate()+1)) {
+    current_csv_date = current_date.toLocaleString('en-ZA', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date;
+    console.log("Fetching CSV [" + current_csv_date + "]...")
+    const start = new Date()
+    const members = await get_csv(csvUrl)
+    console.log("Got CSV!")
+    console.log("Inserting & updating members in database...")
+    const all_db_changes = await update_and_insert_members(members)
+    const new_members = all_db_changes[0]
+    const updated_fields = all_db_changes[1]
+    const updated_members = [...new Set(updated_fields)];
+    console.log("Done!")
+    console.log("Inserted " + new_members.length + " new members into database")
+    console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
+    const end = new Date()
+    const exec_time = (end - start)/1000
+    console.log(exec_time)
+    await db.insert_csv_log(today, new_members.length, updated_members.length, updated_fields.length, exec_time)
+  }
   db.pool.end()
-  const end = performance.now();
-  console.log(`${end - start}ms`);
 }
-import_csv()
+import_csv(today, end_date)
 
 // get the csv and return members array with Member objects
-function get_csv() {
+function get_csv(csvUrl) {
   let members = []
   return getCSV(csvUrl)
     .then((csvData) => {
@@ -47,14 +50,10 @@ function get_csv() {
         if (member.rep == '') member.rep = 0
         if (member.strikes == '') member.strikes = 0
         if (member.hp == '') member.hp = 0
-        if (member.skill_tier == '') member.skill_tier = 0
-        // if (member.reliability == '') member.reliability = 0
         if (member.rep_tm == '') member.rep_tm = 0
         if (member.ev_tm == '') member.ev_tm = 0
         if (member.ev_hosted_tm == '') member.ev_hosted_tm = 0
         if (member.rec_tm == '') member.rec_tm = 0
-        // if (member.comp_events_tm == '') member.comp_events_tm = 0
-        // if (member.discord_hours_tm == '') member.discord_hours_tm = 0
         members.push(member)
       });
       return members
@@ -125,38 +124,14 @@ async function update_and_insert_members(members) {
           update_hp(member.id, member.hp, db_member.hp)
           members_updated.push(member.id)
         }
-        if (member.manager != db_member.manager) {
-          update_manager(member.id, member.manager, db_member.manager)
-          members_updated.push(member.id)
-        }
-        if (member.primary_game != db_member.primary_game) {
-          update_primary_game(member.id, member.primary_game, db_member.primary_game)
-          members_updated.push(member.id)
-        }
-        if (member.skill_tier != db_member.skill_tier) {
-          update_skill_tier(member.id, member.skill_tier, db_member.skill_tier)
-          members_updated.push(member.id)
-        }
-        if (member.vanguard != db_member.vanguard) {
-          update_vanguard(member.id, member.vanguard, db_member.vanguard)
-          members_updated.push(member.id)
-        }
         // create a date based on csv's field member.last_act
         // .toDateString() in order to compare only the date parts (csv vs db)
         // that way we don't need to mess with timezones
-        member_forum_date = new Date(member.last_forum_activity)
+        member_forum_date = new Date(member.last_forum_act)
         if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
           update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
           members_updated.push(member.id)
         }
-        member_discord_date = new Date(member.last_discord_activity)
-        if (member.last_discord_activity.toDateString() != db_member.last_discord_activity.toDateString()) {
-          update_last_discord_activity(member.id, member_discord_date.toJSON(), db_member.last_discord_activity.toJSON())
-          members_updated.push(member.id)
-        }
-        // if (member.reliability != db_member.reliability) {
-        //   // db.update_reliability(id)
-        // }
         // daily values!
         if (member.rep_tm != db_member.latest_rep_earned) {
           update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
@@ -174,14 +149,6 @@ async function update_and_insert_members(members) {
           update_latest_recruits(member.id, member.rec_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
-        // if (member.comp_events_attended != db_member.latest_comp_events_attended) {
-        //   update_latest_comp_events_attended(member.id, member.comp_events_attended, db_member.latest_comp_events_attended)
-        //   members_updated.push(member.id)
-        // }
-        // if (member.discord_hours_tm != db_member.latest_discord_hours) {
-        //   update_latest_discord_hours(member.id, member.discord_hours_tm, db_member.latest_discord_hours)
-        //   members_updated.push(member.id)
-        // }
       }
       else {
         member_inserted = await insert_member_into_db(member)
@@ -311,53 +278,11 @@ function update_hp(id, hp, old_value) {
   db.insert_history(today, id, type, old_value, hp)
 }
 
-// update manager
-function update_manager(id, manager, old_value) {
-  db.update_manager(id, manager)
-  let type = db_type_of_changes.indexOf('manager')
-  db.insert_history(today, id, type, old_value, manager)
-}
-
-// update primary_game
-function update_primary_game(id, primary_game, old_value) {
-  db.update_primary_game(id, primary_game)
-  let type = db_type_of_changes.indexOf('primary_game')
-  db.insert_history(today, id, type, old_value, primary_game)
-}
-
-// update skill_tier
-function update_skill_tier(id, skill_tier, old_value) {
-  db.update_skill_tier(id, skill_tier)
-  let type = db_type_of_changes.indexOf('skill_tier')
-  db.insert_history(today, id, type, old_value, skill_tier)
-}
-
-// update vanguard
-function update_vanguard(id, vanguard, old_value) {
-  db.update_vanguard(id, vanguard)
-  let type = db_type_of_changes.indexOf('vanguard')
-  db.insert_history(today, id, type, old_value, vanguard)
-}
-
 // update last_forum_activity
 function update_last_forum_activity(id, last_forum_activity, old_value) {
   db.update_last_forum_activity(id, last_forum_activity)
   let type = db_type_of_changes.indexOf('last_forum_activity')
   db.insert_history(today, id, type, old_value, last_forum_activity)
-}
-
-// update last_discord_activity
-function update_last_discord_activity(id, last_discord_activity, old_value) {
-  db.update_last_discord_activity(id, last_discord_activity)
-  let type = db_type_of_changes.indexOf('last_discord_activity')
-  db.insert_history(today, id, type, old_value, last_discord_activity)
-}
-
-// update reliability
-function update_reliability(id, reliability, old_value) {
-  db.update_reliability(id, reliability)
-  let type = db_type_of_changes.indexOf('reliability')
-  db.insert_history(today, id, type, old_value, reliability)
 }
 
 // daily values
@@ -410,32 +335,6 @@ function update_latest_recruits(id, recruits, old_value) {
   db.update_latest_recruits(id, recruits)
   if (daily_value > 0 ) {
     db.insert_recruits(today, id, daily_value)
-  }
-}
-
-// update comp events attended
-function update_latest_comp_events_attended(id, comp_events_attended, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = comp_events_attended - old_value
-  if ( csvDay == '01' ) {
-    daily_value = comp_events_attended
-  }
-  db.update_latest_comp_events_attended(id, comp_events_attended)
-  if (daily_value > 0 ) {
-    db.insert_comp_events_attended(today, id, daily_value)
-  }
-}
-
-// update discord hours
-function update_latest_discord_hours(id, discord_hours, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = discord_hours - old_value
-  if ( csvDay == '01' ) {
-    daily_value = discord_hours
-  }
-  db.update_latest_discord_hours(id, discord_hours)
-  if (daily_value > 0 ) {
-    db.insert_discord_hours(today, id, daily_value)
   }
 }
 
