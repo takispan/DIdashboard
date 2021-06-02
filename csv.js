@@ -87,8 +87,20 @@ async function update_and_insert_members(members) {
           update_cohort(member.id, member.cohort, db_member.cohort)
           members_updated.push(member.id)
         }
+        if (member.house && member.house != db_member.house) {
+          update_house(member.id, member.house, db_member.house)
+          members_updated.push(member.id)
+        }
         if (member.division && member.division != db_member.division) {
           update_division(member.id, member.division, db_member.division)
+          members_updated.push(member.id)
+        }
+        if (member.team && member.team != db_member.team) {
+          update_team(member.id, member.team, db_member.team)
+          members_updated.push(member.id)
+        }
+        if (member.roster && member.roster != db_member.roster) {
+          update_roster(member.id, member.roster, db_member.roster)
           members_updated.push(member.id)
         }
         if (member.rank && member.rank != db_member.rank) {
@@ -199,11 +211,32 @@ function update_cohort(id, cohort, old_value) {
   db.insert_history(today, id, type, old_value, cohort)
 }
 
+// update house
+function update_house(id, house, old_value) {
+  db.update_house(id, house)
+  let type = db_type_of_changes.indexOf('house')
+  db.insert_history(today, id, type, old_value, house)
+}
+
 // update division
 function update_division(id, division, old_value) {
   db.update_division(id, division)
   let type = db_type_of_changes.indexOf('division')
   db.insert_history(today, id, type, old_value, division)
+}
+
+// update team
+function update_team(id, team, old_value) {
+  db.update_team(id, team)
+  let type = db_type_of_changes.indexOf('team')
+  db.insert_history(today, id, type, old_value, team)
+}
+
+// update roster
+function update_roster(id, roster, old_value) {
+  db.update_roster(id, roster)
+  let type = db_type_of_changes.indexOf('roster')
+  db.insert_history(today, id, type, old_value, roster)
 }
 
 // update rank
