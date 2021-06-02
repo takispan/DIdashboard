@@ -50,7 +50,6 @@ function get_csv(csvUrl) {
         if (member.rep == '') member.rep = 0
         if (member.strikes == '') member.strikes = 0
         if (member.honors == '') member.honors = 0
-        if (member.skill_tier == '') member.skill_tier = 0
         members.push(member)
       });
       return members
