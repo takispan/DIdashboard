@@ -37,8 +37,8 @@ async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',
-      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, last_forum_activity, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *',
-      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.last_act, member.rep_tm, member.ev_tm, member.ev_hosted_tm, member.rec_tm],
+      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, division, rank, position, posts, rep, strikes, hp, last_forum_activity, latest_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
+      values: [member.member_id, member.member_name, member.country, member.joined, member.cohort, member.division, member.member_rank, member.position, member.post_count, member.rep, member.strikes, member.honors, member.last_activity, member.events],
     }
     const res = await pool.query(query)
     return res.rows[0]
@@ -612,6 +612,7 @@ async function insert_discord_hours(today, id, daily_value) {
 // export
 module.exports = {
   pool,
+  insert_csv_log,
   insert_member,
   get_members,
   get_member_by_id,
