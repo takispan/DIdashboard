@@ -2,8 +2,9 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const today = new Date(Date.UTC(2020, 0, 1))
+const csv_start_date = new Date(Date.UTC(2020, 0, 1))
 const csv_end_date = new Date(Date.UTC(2020, 0, 11))
+let today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
   let current_date = new Date(start_date.getTime())
@@ -15,6 +16,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
       month: '2-digit',
       day: '2-digit'
     })
+    today = new Date(current_date.getTime())
     csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date;
     console.log("Fetching CSV [" + current_csv_date + "]...")
     const start = new Date()
@@ -35,7 +37,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
   }
   db.pool.end()
 }
-import_csv(today, csv_end_date)
+import_csv(csv_start_date, csv_end_date)
 
 // get the csv and return members array with Member objects
 function get_csv(csvUrl) {
