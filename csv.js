@@ -239,6 +239,19 @@ function update_last_forum_activity(id, last_forum_activity, old_value) {
 }
 
 // daily values
+// update rep earned
+function update_latest_rep_earned(id, rep_earned, old_value) {
+  if (old_value == null) old_value = 0
+  let daily_value = rep_earned - old_value
+  if ( csvDay == '01' ) {
+    daily_value = rep_earned
+  }
+  db.update_latest_rep_earned(id, rep_earned)
+  if (daily_value > 0 ) {
+    db.insert_rep_earned(today, id, daily_value)
+  }
+}
+
 // update events attended
 function update_latest_events_attended(id, events_attended, old_value) {
   if (old_value == null) old_value = 0
@@ -249,6 +262,32 @@ function update_latest_events_attended(id, events_attended, old_value) {
   db.update_latest_events_attended(id, events_attended)
   if (daily_value > 0 ) {
     db.insert_events_attended(today, id, daily_value)
+  }
+}
+
+// update events hosted
+function update_latest_events_hosted(id, events_hosted, old_value) {
+  if (old_value == null) old_value = 0
+  let daily_value = events_hosted - old_value
+  if ( csvDay == '01' ) {
+    daily_value = events_hosted
+  }
+  db.update_latest_events_hosted(id, events_hosted)
+  if (daily_value > 0 ) {
+    db.insert_events_hosted(today, id, daily_value)
+  }
+}
+
+// update recruits
+function update_latest_recruits(id, recruits, old_value) {
+  if (old_value == null) old_value = 0
+  let daily_value = recruits - old_value
+  if ( csvDay == '01' ) {
+    daily_value = recruits
+  }
+  db.update_latest_recruits(id, recruits)
+  if (daily_value > 0 ) {
+    db.insert_recruits(today, id, daily_value)
   }
 }
 
