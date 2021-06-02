@@ -2,11 +2,12 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const today = new Date(Date.UTC(2020, 0, 1))
-const end_date = new Date(Date.UTC(2020, 0, 11))
+const today = new Date(Date.UTC(2020, 3, 1))
+const csv_end_date = new Date(Date.UTC(2020, 3, 1))
+let csvDay
 
-async function import_csv(start_date, end_date = start_date) {
-  let current_date = start_date
+async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
+  let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
   for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate()+1)) {
     current_csv_date = current_date.toLocaleString('en-ZA', {
@@ -16,6 +17,7 @@ async function import_csv(start_date, end_date = start_date) {
       day: '2-digit'
     })
     csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date;
+    csvDay = csvUrl.substr(49)
     console.log("Fetching CSV [" + current_csv_date + "]...")
     const start = new Date()
     const members = await get_csv(csvUrl)
@@ -35,7 +37,7 @@ async function import_csv(start_date, end_date = start_date) {
   }
   db.pool.end()
 }
-import_csv(today, end_date)
+import_csv(today)
 
 // get the csv and return members array with Member objects
 function get_csv(csvUrl) {
@@ -127,7 +129,7 @@ async function update_and_insert_members(members) {
         // create a date based on csv's field member.last_act
         // .toDateString() in order to compare only the date parts (csv vs db)
         // that way we don't need to mess with timezones
-        member_forum_date = new Date(member.last_forum_act)
+        member_forum_date = new Date(member.last_act)
         if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
           update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
           members_updated.push(member.id)
