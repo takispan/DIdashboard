@@ -2,8 +2,9 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const today = new Date(Date.UTC(2020, 0, 12))
+const csv_start_day = new Date(Date.UTC(2020, 0, 12))
 const csv_end_date = new Date(Date.UTC(2020, 3, 1))
+let csvDay, today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
   let current_date = new Date(start_date.getTime())
@@ -15,7 +16,9 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
       month: '2-digit',
       day: '2-digit'
     })
+    today = new Date(current_date.getTime())
     csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date;
+    csvDay = csvUrl.substr(49)
     console.log("Fetching CSV [" + current_csv_date + "]...")
     const start = new Date()
     const members = await get_csv(csvUrl)
@@ -35,7 +38,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
   }
   db.pool.end()
 }
-import_csv(today, csv_end_date)
+import_csv(csv_start_day, csv_end_date)
 
 // get the csv and return members array with Member objects
 function get_csv(csvUrl) {
@@ -46,11 +49,14 @@ function get_csv(csvUrl) {
       csvData.forEach((row) => {
         member = new Member() // New Member Object
         Object.assign(member, row) // Assign json to the new Member
-        if (member.post_count == '') member.post_count = 0
+        if (member.posts == '') member.posts = 0
         if (member.rep == '') member.rep = 0
         if (member.strikes == '') member.strikes = 0
-        if (member.honors == '') member.honors = 0
-        if (member.skill_tier == '') member.skill_tier = 0
+        if (member.hp == '') member.hp = 0
+        if (member.rep_tm == '') member.rep_tm = 0
+        if (member.ev_tm == '') member.ev_tm = 0
+        if (member.ev_hosted_tm == '') member.ev_hosted_tm = 0
+        if (member.rec_tm == '') member.rec_tm = 0
         members.push(member)
       });
       return members
@@ -64,58 +70,58 @@ async function update_and_insert_members(members) {
   let members_updated_and_inserted = [], members_updated = [], members_inserted = []
   for (let i in members) {
     member = members[i]
-    if (member.member_id != '') {
-      db_member = await is_member_in_db(member.member_id)
+    if (member.id != '') {
+      db_member = await is_member_in_db(member.id)
       if (member instanceof Member && db_member) {
         // if fields change, call the necessary functions to update the database
         // columns change too, so when CSV is altered come back here!
-        if (member.member_name != db_member.name) {
-          update_name(member.member_id, member.member_name, db_member.name)
-          members_updated.push(member.member_id)
+        if (member.name != db_member.name) {
+          update_name(member.id, member.name, db_member.name)
+          members_updated.push(member.id)
         }
         if (member.country != db_member.country) {
-          update_country(member.member_id, member.country, db_member.country)
-          members_updated.push(member.member_id)
+          update_country(member.id, member.country, db_member.country)
+          members_updated.push(member.id)
         }
         if (member.cohort != db_member.cohort) {
-          update_cohort(member.member_id, member.cohort, db_member.cohort)
-          members_updated.push(member.member_id)
+          update_cohort(member.id, member.cohort, db_member.cohort)
+          members_updated.push(member.id)
         }
         if (member.division != db_member.division) {
-          update_division(member.member_id, member.division, db_member.division)
-          members_updated.push(member.member_id)
+          update_division(member.id, member.division, db_member.division)
+          members_updated.push(member.id)
         }
-        if (member.member_rank != db_member.rank) {
-          update_rank(member.member_id, member.member_rank, db_member.rank)
-          members_updated.push(member.member_id)
+        if (member.rank != db_member.rank) {
+          update_rank(member.id, member.rank, db_member.rank)
+          members_updated.push(member.id)
         }
         if (member.position != db_member.position) {
-          update_position(member.member_id, member.position, db_member.position)
-          members_updated.push(member.member_id)
+          update_position(member.id, member.position, db_member.position)
+          members_updated.push(member.id)
         }
-        if (member.post_count != db_member.posts) {
-          update_posts(member.member_id, member.post_count, db_member.posts)
-          members_updated.push(member.member_id)
+        if (member.posts != db_member.posts) {
+          update_posts(member.id, member.posts, db_member.posts)
+          members_updated.push(member.id)
         }
         if (member.rep != db_member.rep) {
-          update_rep(member.member_id, member.rep, db_member.rep)
-          members_updated.push(member.member_id)
+          update_rep(member.id, member.rep, db_member.rep)
+          members_updated.push(member.id)
         }
         if (member.strikes != db_member.strikes) {
-          update_strikes(member.member_id, member.strikes, db_member.strikes)
-          members_updated.push(member.member_id)
+          update_strikes(member.id, member.strikes, db_member.strikes)
+          members_updated.push(member.id)
         }
-        if (member.honors != db_member.hp) {
-          update_hp(member.member_id, member.honors, db_member.hp)
-          members_updated.push(member.member_id)
+        if (member.hp != db_member.hp) {
+          update_hp(member.id, member.hp, db_member.hp)
+          members_updated.push(member.id)
         }
-        // create a date based on csv's field member.last_activity
+        // create a date based on csv's field member.last_act
         // .toDateString() in order to compare only the date parts (csv vs db)
         // that way we don't need to mess with timezones
-        member_forum_date = new Date(member.last_activity)
+        member_forum_date = new Date(member.last_act)
         if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
-          update_last_forum_activity(member.member_id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
-          members_updated.push(member.member_id)
+          update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
+          members_updated.push(member.id)
         }
       }
       else {
@@ -134,8 +140,8 @@ async function update_and_insert_members(members) {
 // insert members in database
 async function insert_member_into_db(member) {
   let is_already_in_db, db_member
-  if (member.member_id != '' && member.member_rank != 'Applicant') {
-    is_already_in_db = await is_member_in_db(member.member_id)
+  if (member.id != '' && member.rank != 'Applicant') {
+    is_already_in_db = await is_member_in_db(member.id)
     if (member instanceof Member && !is_already_in_db) {
       db_member = await db.insert_member(member)
     }
