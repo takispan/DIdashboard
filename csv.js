@@ -9,7 +9,7 @@ let csvDay, today
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
   let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
-  for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate()+1)) {
+  for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate() + 1)) {
     current_csv_date = current_date.toLocaleString('en-ZA', {
       timeZone: 'UTC',
       year: 'numeric',
@@ -32,7 +32,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
     console.log("Inserted " + new_members.length + " new members into database")
     console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
     const end = new Date()
-    const exec_time = (end - start)/1000
+    const exec_time = (end - start) / 1000
     console.log(exec_time)
     await db.insert_csv_log(current_date, new_members.length, updated_members.length, updated_fields.length, exec_time)
   }
@@ -49,14 +49,11 @@ function get_csv(csvUrl) {
       csvData.forEach((row) => {
         member = new Member() // New Member Object
         Object.assign(member, row) // Assign json to the new Member
-        if (member.posts == '') member.posts = 0
-        if (member.rep == '') member.rep = 0
-        if (member.strikes == '') member.strikes = 0
-        if (member.hp == '') member.hp = 0
-        if (member.rep_tm == '') member.rep_tm = 0
-        if (member.ev_tm == '') member.ev_tm = 0
-        if (member.ev_hosted_tm == '') member.ev_hosted_tm = 0
-        if (member.rec_tm == '') member.rec_tm = 0
+        // convert date string in csv to string without time to avoid timezone issues
+        if (!member.joined) member.joined = '1970-01-01'
+        member.joined = extractDate(new Date(member.joined))
+        if (!member.last_act) member.last_act = '1970-01-01'
+        member.last_act = extractDate(new Date(member.last_act))
         members.push(member)
       });
       return members
@@ -67,10 +64,12 @@ function get_csv(csvUrl) {
 // update member fields in database
 async function update_and_insert_members(members) {
   let member, is_already_in_db, db_member, member_forum_date, member_inserted
-  let members_updated_and_inserted = [], members_updated = [], members_inserted = []
+  let members_updated_and_inserted = [],
+    members_updated = [],
+    members_inserted = []
   for (let i in members) {
     member = members[i]
-    if (member.id != '') {
+    if (member.id) {
       db_member = await is_member_in_db(member.id)
       if (member instanceof Member && db_member) {
         // if fields change, call the necessary functions to update the database
@@ -127,12 +126,10 @@ async function update_and_insert_members(members) {
           update_hp(member.id, member.hp, db_member.hp)
           members_updated.push(member.id)
         }
-        // create a date based on csv's field member.last_act
-        // .toDateString() in order to compare only the date parts (csv vs db)
-        // that way we don't need to mess with timezones
-        member_forum_date = new Date(member.last_act)
-        if (member_forum_date && member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
-          update_last_forum_activity(member.id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
+        // convert database date to string without time to avoid timezone issues
+        db_member.last_forum_activity = extractDate(db_member.last_forum_activity)
+        if (member.last_act && member.last_act != db_member.last_forum_activity) {
+          update_last_forum_activity(member.id, member.last_act, db_member.last_forum_activity)
           members_updated.push(member.id)
         }
         // daily values!
@@ -152,8 +149,7 @@ async function update_and_insert_members(members) {
           update_latest_recruits(member.id, member.rec_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
-      }
-      else {
+      } else {
         member_inserted = await insert_member_into_db(member)
         if (member_inserted) {
           members_inserted.push(member_inserted)
@@ -169,9 +165,27 @@ async function update_and_insert_members(members) {
 // insert members in database
 async function insert_member_into_db(member) {
   let is_already_in_db, db_member
-  if (member.id != '' && member.rank != 'Applicant') {
+  if (member.id && member.rank != 'Applicant') {
     is_already_in_db = await is_member_in_db(member.id)
     if (member instanceof Member && !is_already_in_db) {
+      if (!member.name) member.name = 'default_new_member'
+      if (!member.country) member.country = 'Country'
+      if (!member.joined) member.joined = '1970-01-01'
+      if (!member.cohort) member.cohort = 'Cohort'
+      if (!member.house) member.house = 'House'
+      if (!member.division) member.division = 'Division'
+      if (!member.rank) member.rank = 'Rank'
+      if (!member.position) member.position = 'Position'
+      if (!member.team) member.team = 'Team'
+      if (!member.roster) member.roster = 'Roster'
+      if (!member.posts) member.posts = '0'
+      if (!member.rep) member.rep = '0'
+      if (!member.strikes) member.strikes = '0'
+      if (!member.hp) member.hp = '0'
+      if (!member.rep_tm) member.rep_tm = '0'
+      if (!member.ev_tm) member.ev_tm = '0'
+      if (!member.ev_hosted_tm) member.ev_hosted_tm = '0'
+      if (!member.rec_tm) member.rec_tm = '0'
       db_member = await db.insert_member(member)
     }
   }
@@ -189,7 +203,7 @@ const db_type_of_changes = ['name', 'country', 'cohort', 'house', 'division', 't
 
 /**
  *  update member fields
-**/
+ **/
 // update name
 function update_name(id, name, old_value) {
   db.update_name(id, name)
@@ -285,7 +299,7 @@ function update_hp(id, hp, old_value) {
 function update_last_forum_activity(id, last_forum_activity, old_value) {
   db.update_last_forum_activity(id, last_forum_activity)
   let type = db_type_of_changes.indexOf('last_forum_activity')
-  db.insert_history(today, id, type, old_value, last_forum_activity)
+  db.insert_history_activity(today, id, type, old_value, last_forum_activity)
 }
 
 // daily values
@@ -293,11 +307,11 @@ function update_last_forum_activity(id, last_forum_activity, old_value) {
 function update_latest_rep_earned(id, rep_earned, old_value) {
   if (old_value == null) old_value = 0
   let daily_value = rep_earned - old_value
-  if ( csvDay == '01' ) {
+  if (csvDay == '01') {
     daily_value = rep_earned
   }
   db.update_latest_rep_earned(id, rep_earned)
-  if (daily_value > 0 ) {
+  if (daily_value > 0) {
     db.insert_rep_earned(today, id, daily_value)
   }
 }
@@ -306,11 +320,11 @@ function update_latest_rep_earned(id, rep_earned, old_value) {
 function update_latest_events_attended(id, events_attended, old_value) {
   if (old_value == null) old_value = 0
   let daily_value = events_attended - old_value
-  if ( csvDay == '01' ) {
+  if (csvDay == '01') {
     daily_value = events_attended
   }
   db.update_latest_events_attended(id, events_attended)
-  if (daily_value > 0 ) {
+  if (daily_value > 0) {
     db.insert_events_attended(today, id, daily_value)
   }
 }
@@ -319,11 +333,11 @@ function update_latest_events_attended(id, events_attended, old_value) {
 function update_latest_events_hosted(id, events_hosted, old_value) {
   if (old_value == null) old_value = 0
   let daily_value = events_hosted - old_value
-  if ( csvDay == '01' ) {
+  if (csvDay == '01') {
     daily_value = events_hosted
   }
   db.update_latest_events_hosted(id, events_hosted)
-  if (daily_value > 0 ) {
+  if (daily_value > 0) {
     db.insert_events_hosted(today, id, daily_value)
   }
 }
@@ -332,13 +346,21 @@ function update_latest_events_hosted(id, events_hosted, old_value) {
 function update_latest_recruits(id, recruits, old_value) {
   if (old_value == null) old_value = 0
   let daily_value = recruits - old_value
-  if ( csvDay == '01' ) {
+  if (csvDay == '01') {
     daily_value = recruits
   }
   db.update_latest_recruits(id, recruits)
-  if (daily_value > 0 ) {
+  if (daily_value > 0) {
     db.insert_recruits(today, id, daily_value)
   }
+}
+
+// extract date from date object and return string (without time)
+function extractDate(date) {
+  let date_array = [date.getFullYear(), date.getMonth()+1, date.getDate()]
+  let month = date_array[1] < 10 ? '0' + date_array[1] : date_array[1]
+  let day = date_array[2] < 10 ? '0' + date_array[2] : date_array[2]
+  return date_array[0] + '-' + month + '-' + day
 }
 
 // Member object
