@@ -49,20 +49,9 @@ function get_csv(csvUrl) {
       csvData.forEach((row) => {
         member = new Member()
         Object.assign(member, row) // Assign json to the new Member
-        if (!member.skill_tier) {
-          member.skill_tier = '0'
-        }
-        else {
-          member.skill_tier = member.skill_tier.substr(5, 1)
-          if (isNaN(parseInt(member.skill_tier, 10))) member.skill_tier = '0'
-        }
         // convert date string in csv to string without time to avoid timezone issues
-        if (!member.joined) member.joined = '1970-01-01'
-        member.joined = extractDate(new Date(member.joined))
-        if (!member.last_forum_activity) member.last_forum_activity = '1970-01-01'
-        member.last_forum_activity = extractDate(new Date(member.last_forum_activity))
-        if (!member.last_discord_activity || member.last_discord_activity == 'Joined' || member.last_discord_activity == 'Never') member.last_discord_activity = '1970-01-01'
-        member.last_discord_activity = extractDate(new Date(member.last_discord_activity))
+        if (!member.last_act) member.last_act = '1970-01-01'
+        member.last_act = extractDate(new Date(member.last_act))
         members.push(member)
       });
       return members
@@ -72,7 +61,7 @@ function get_csv(csvUrl) {
 
 // update member fields in database
 async function update_and_insert_members(members) {
-  let member, is_already_in_db, db_member, member_forum_date, member_discord_date, member_inserted
+  let member, is_already_in_db, db_member, member_forum_date, member_inserted
   let members_updated_and_inserted = [],
     members_updated = [],
     members_inserted = []
@@ -135,32 +124,10 @@ async function update_and_insert_members(members) {
           update_hp(member.id, member.hp, db_member.hp)
           members_updated.push(member.id)
         }
-        if (member.manager && member.manager != db_member.manager) {
-          update_manager(member.id, member.manager, db_member.manager)
-          members_updated.push(member.id)
-        }
-        if (member.primary_game && member.primary_game != db_member.primary_game) {
-          update_primary_game(member.id, member.primary_game, db_member.primary_game)
-          members_updated.push(member.id)
-        }
-        if (member.skill_tier && member.skill_tier != db_member.skill_tier) {
-          update_skill_tier(member.id, member.skill_tier, db_member.skill_tier)
-          members_updated.push(member.id)
-        }
-        if (member.vanguard && member.vanguard != db_member.vanguard) {
-          update_vanguard(member.id, member.vanguard, db_member.vanguard)
-          members_updated.push(member.id)
-        }
         // convert database date to string without time to avoid timezone issues
         db_member.last_forum_activity = extractDate(db_member.last_forum_activity)
-        if (member.last_forum_activity && member.last_forum_activity != db_member.last_forum_activity) {
-          update_last_forum_activity(member.id, member.last_forum_activity, db_member.last_forum_activity)
-          members_updated.push(member.id)
-        }
-        // same for discord db date
-        db_member.last_discord_activity = extractDate(db_member.last_discord_activity)
-        if (member.last_discord_activity && member.last_discord_activity != db_member.last_discord_activity) {
-          update_last_discord_activity(member.id, member.last_discord_activity, db_member.last_discord_activity)
+        if (member.last_act && member.last_act != db_member.last_forum_activity) {
+          update_last_forum_activity(member.id, member.last_act, db_member.last_forum_activity)
           members_updated.push(member.id)
         }
         // daily values!
@@ -201,6 +168,7 @@ async function insert_member_into_db(member) {
     if (member instanceof Member && !is_already_in_db) {
       if (!member.name) member.name = 'default_new_member'
       if (!member.country) member.country = 'Country'
+      if (!member.joined) member.joined = '1970-01-01'
       if (!member.cohort) member.cohort = 'Cohort'
       if (!member.house) member.house = 'House'
       if (!member.division) member.division = 'Division'
@@ -212,13 +180,10 @@ async function insert_member_into_db(member) {
       if (!member.rep) member.rep = '0'
       if (!member.strikes) member.strikes = '0'
       if (!member.hp) member.hp = '0'
-      if (!member.manager) member.manager = 'Default Manager'
-      if (!member.primary_game) member.primary_game = 'Primary Game'
-      if (!member.vanguard) member.vanguard = 'Vanguard'
       if (!member.rep_tm) member.rep_tm = '0'
-      if (!member.events_tm) member.events_tm = '0'
-      if (!member.events_hosted_tm) member.events_hosted_tm = '0'
-      if (!member.recruits_tm) member.recruits_tm = '0'
+      if (!member.ev_tm) member.ev_tm = '0'
+      if (!member.ev_hosted_tm) member.ev_hosted_tm = '0'
+      if (!member.rec_tm) member.rec_tm = '0'
       db_member = await db.insert_member(member)
     }
   }
@@ -363,20 +328,6 @@ function update_last_forum_activity(id, last_forum_activity, old_value) {
   db.insert_history_activity(today, id, type, old_value, last_forum_activity)
 }
 
-// update last_discord_activity
-function update_last_discord_activity(id, last_discord_activity, old_value) {
-  db.update_last_discord_activity(id, last_discord_activity)
-  let type = db_type_of_changes.indexOf('last_discord_activity')
-  db.insert_history_activity(today, id, type, old_value, last_discord_activity)
-}
-
-// update reliability
-function update_reliability(id, reliability, old_value) {
-  db.update_reliability(id, reliability)
-  let type = db_type_of_changes.indexOf('reliability')
-  db.insert_history(today, id, type, old_value, reliability)
-}
-
 // daily values
 // update rep earned
 function update_latest_rep_earned(id, rep_earned, old_value) {
@@ -427,32 +378,6 @@ function update_latest_recruits(id, recruits, old_value) {
   db.update_latest_recruits(id, recruits)
   if (daily_value > 0) {
     db.insert_recruits(today, id, daily_value)
-  }
-}
-
-// update comp events attended
-function update_latest_comp_events_attended(id, comp_events_attended, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = comp_events_attended - old_value
-  if (csvDay == '01') {
-    daily_value = comp_events_attended
-  }
-  db.update_latest_comp_events_attended(id, comp_events_attended)
-  if (daily_value > 0) {
-    db.insert_comp_events_attended(today, id, daily_value)
-  }
-}
-
-// update discord hours
-function update_latest_discord_hours(id, discord_hours, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = discord_hours - old_value
-  if (csvDay == '01') {
-    daily_value = discord_hours
-  }
-  db.update_latest_discord_hours(id, discord_hours)
-  if (daily_value > 0) {
-    db.insert_discord_hours(today, id, daily_value)
   }
 }
 
