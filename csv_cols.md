@@ -185,7 +185,7 @@
 33. discord_hours_tm
 34. discord_hours_lm
 
-## CSV(v6) columns 2021/05/09 - [latest] (32 cols)
+## CSV(v6) columns 2021/05/09 - 2021/06/06 (32 cols)
 1. id
 2. name
 3. country
@@ -218,3 +218,48 @@
 30. comp_events_lm
 31. discord_hours_tm
 32. discord_hours_lm
+
+## CSV(v7) columns 2021/06/07 - [latest] (43 cols)
+1. id
+2. name
+3. country
+4. joined
+5. cohort
+6. house
+7. division
+8. rank
+9. title
+10. position
+11. posts
+12. rep
+13. strikes
+14. hp
+15. manager
+16. primary_game
+17. skill_tier
+18. vanguard
+19. last_forum_activity
+20. last_discord_activity
+21. rep_tm
+22. rep_lm
+23. casual_event_secs_tm
+24. casual_event_secs_lm
+25. coach_event_secs_tm
+26. coach_event_secs_lm
+27. community_event_secs_tm
+28. community_event_secs_lm
+29. comp_event_secs_tm
+30. comp_event_secs_lm
+31. leadership_event_secs_tm
+32. leadership_event_secs_lm
+33. training_event_secs_tm
+34. training_event_secs_lm
+35. twitch_event_secs_tm
+36. twitch_event_secs_lm
+37. host_event_secs_tm
+38. host_event_secs_lm
+39. recruits_tm
+40. recruits_lm
+41. reliability
+42. discord_secs_tm
+43. discord_secs_lm

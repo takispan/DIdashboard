@@ -37,8 +37,8 @@ async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',
-      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_comp_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) RETURNING *',
-      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.events_tm, member.events_hosted_tm, member.recruits_tm, member.comp_events_tm],
+      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_comp_events_attended, latest_discord_hours) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) RETURNING *',
+      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.events_tm, member.events_hosted_tm, member.recruits_tm, member.comp_events_tm, member.discord_hours_tm],
     }
     const res = await pool.query(query)
     return res.rows[0]
@@ -49,7 +49,6 @@ async function insert_member(member) {
 }
 
 async function get_members() {
-  // async/await
   try {
     const query = {
       name: 'get-member-by-id',
@@ -64,7 +63,6 @@ async function get_members() {
 }
 
 async function get_member_by_id(id) {
-  // async/await
   try {
     const query = {
       name: 'get-member-by-id',
@@ -81,7 +79,6 @@ async function get_member_by_id(id) {
 
 // insert member history
 async function insert_history(today, id, type, old_value, new_value) {
-  // async/await
   try {
     const query = {
       name: 'insert-history',
@@ -93,6 +90,22 @@ async function insert_history(today, id, type, old_value, new_value) {
   } catch (err) {
     console.log(err.stack)
     console.log("Error (insert_history)")
+  }
+}
+
+// insert member history (activity)
+async function insert_history_activity(today, id, type, old_value, new_value) {
+  try {
+    const query = {
+      name: 'insert-history_activity',
+      text: 'INSERT INTO public."Member_history_activity"(date, type, old_value, new_value, "memberID") VALUES($1, $2, $3, $4, $5) RETURNING *',
+      values: [today, type, old_value, new_value, id],
+    }
+    const res = await pool.query(query)
+    return res.rows[0];
+  } catch (err) {
+    console.log(err.stack)
+    console.log("Error (insert_history_activity)")
   }
 }
 
@@ -617,6 +630,7 @@ module.exports = {
   get_members,
   get_member_by_id,
   insert_history,
+  insert_history_activity,
   update_name,
   update_country,
   update_cohort,
