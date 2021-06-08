@@ -2,8 +2,8 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const csv_start_day = new Date(Date.UTC(2020, 3, 2))
-const csv_end_date = new Date(Date.UTC(2020, 8, 5))
+const csv_start_day = new Date(Date.UTC(2020, 0, 12))
+const csv_end_date = new Date(Date.UTC(2020, 3, 1))
 let csvDay, today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
@@ -85,7 +85,7 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.house && member.house != db_member.house) {
-          db.update_house(member.id, member.house, db_member.house)
+          update_house(member.id, member.house, db_member.house)
           members_updated.push(member.id)
         }
         if (member.division && member.division != db_member.division) {
@@ -97,7 +97,7 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.roster && member.roster != db_member.roster) {
-          db.update_roster(member.id, member.roster, db_member.roster)
+          update_roster(member.id, member.roster, db_member.roster)
           members_updated.push(member.id)
         }
         if (member.rank && member.rank != db_member.rank) {
@@ -135,16 +135,16 @@ async function update_and_insert_members(members) {
           update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
           members_updated.push(member.id)
         }
-        if (member.events_tm && member.events_tm != db_member.latest_events_attended) {
-          update_latest_events_attended(member.id, member.events_tm, db_member.latest_events_attended)
+        if (member.ev_tm && member.ev_tm != db_member.latest_events_attended) {
+          update_latest_events_attended(member.id, member.ev_tm, db_member.latest_events_attended)
           members_updated.push(member.id)
         }
-        if (member.events_hosted_tm && member.events_hosted_tm != db_member.latest_events_hosted) {
-          update_latest_events_hosted(member.id, member.events_hosted_tm, db_member.latest_events_hosted)
+        if (member.ev_hosted_tm && member.ev_hosted_tm != db_member.latest_events_hosted) {
+          update_latest_events_hosted(member.id, member.ev_hosted_tm, db_member.latest_events_hosted)
           members_updated.push(member.id)
         }
-        if (member.recruits_tm && member.recruits_tm != db_member.latest_recruits) {
-          update_latest_recruits(member.id, member.recruits_tm, db_member.latest_recruits)
+        if (member.rec_tm && member.rec_tm != db_member.latest_recruits) {
+          update_latest_recruits(member.id, member.rec_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
       } else {
@@ -293,34 +293,6 @@ function update_hp(id, hp, old_value) {
   db.insert_history(today, id, type, old_value, hp)
 }
 
-// update manager
-function update_manager(id, manager, old_value) {
-  db.update_manager(id, manager)
-  let type = db_type_of_changes.indexOf('manager')
-  db.insert_history(today, id, type, old_value, manager)
-}
-
-// update primary_game
-function update_primary_game(id, primary_game, old_value) {
-  db.update_primary_game(id, primary_game)
-  let type = db_type_of_changes.indexOf('primary_game')
-  db.insert_history(today, id, type, old_value, primary_game)
-}
-
-// update skill_tier
-function update_skill_tier(id, skill_tier, old_value) {
-  db.update_skill_tier(id, skill_tier)
-  let type = db_type_of_changes.indexOf('skill_tier')
-  db.insert_history(today, id, type, old_value, skill_tier)
-}
-
-// update vanguard
-function update_vanguard(id, vanguard, old_value) {
-  db.update_vanguard(id, vanguard)
-  let type = db_type_of_changes.indexOf('vanguard')
-  db.insert_history(today, id, type, old_value, vanguard)
-}
-
 // update last_forum_activity
 function update_last_forum_activity(id, last_forum_activity, old_value) {
   db.update_last_forum_activity(id, last_forum_activity)
@@ -383,7 +355,7 @@ function update_latest_recruits(id, recruits, old_value) {
 
 // extract date from date object and return string (without time)
 function extractDate(date) {
-  let date_array = [date.getFullYear(), date.getMonth()+1, date.getDate()]
+  let date_array = [date.getFullYear(), date.getMonth() + 1, date.getDate()]
   let month = date_array[1] < 10 ? '0' + date_array[1] : date_array[1]
   let day = date_array[2] < 10 ? '0' + date_array[2] : date_array[2]
   return date_array[0] + '-' + month + '-' + day
