@@ -96,6 +96,22 @@ async function insert_history(today, id, type, old_value, new_value) {
   }
 }
 
+// insert member history (activity)
+async function insert_history_activity(today, id, type, old_value, new_value) {
+  try {
+    const query = {
+      name: 'insert-history_activity',
+      text: 'INSERT INTO public."Member_history_activity"(date, type, old_value, new_value, "memberID") VALUES($1, $2, $3, $4, $5) RETURNING *',
+      values: [today, type, old_value, new_value, id],
+    }
+    const res = await pool.query(query)
+    return res.rows[0];
+  } catch (err) {
+    console.log(err.stack)
+    console.log("Error (insert_history_activity)")
+  }
+}
+
 // update name
 async function update_name(id, name) {
   try {
@@ -617,6 +633,7 @@ module.exports = {
   get_members,
   get_member_by_id,
   insert_history,
+  insert_history_activity,
   update_name,
   update_country,
   update_cohort,

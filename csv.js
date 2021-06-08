@@ -9,7 +9,7 @@ let today
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
   let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
-  for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate()+1)) {
+  for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate() + 1)) {
     current_csv_date = current_date.toLocaleString('en-ZA', {
       timeZone: 'UTC',
       year: 'numeric',
@@ -31,7 +31,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
     console.log("Inserted " + new_members.length + " new members into database")
     console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
     const end = new Date()
-    const exec_time = (end - start)/1000
+    const exec_time = (end - start) / 1000
     console.log(exec_time)
     await db.insert_csv_log(current_date, new_members.length, updated_members.length, updated_fields.length, exec_time)
   }
@@ -48,10 +48,11 @@ function get_csv(csvUrl) {
       csvData.forEach((row) => {
         member = new Member() // New Member Object
         Object.assign(member, row) // Assign json to the new Member
-        if (member.post_count == '') member.post_count = 0
-        if (member.rep == '') member.rep = 0
-        if (member.strikes == '') member.strikes = 0
-        if (member.honors == '') member.honors = 0
+        // convert date string in csv to string without time to avoid timezone issues
+        if (!member.joined) member.joined = '1970-01-01'
+        member.joined = extractDate(new Date(member.joined))
+        if (!member.last_activity) member.last_activity = '1970-01-01'
+        member.last_activity = extractDate(new Date(member.last_activity))
         members.push(member)
       });
       return members
@@ -62,64 +63,63 @@ function get_csv(csvUrl) {
 // update member fields in database
 async function update_and_insert_members(members) {
   let member, is_already_in_db, db_member, member_forum_date, member_inserted
-  let members_updated_and_inserted = [], members_updated = [], members_inserted = []
+  let members_updated_and_inserted = [],
+    members_updated = [],
+    members_inserted = []
   for (let i in members) {
     member = members[i]
-    if (member.member_id != '') {
+    if (member.member_id) {
       db_member = await is_member_in_db(member.member_id)
       if (member instanceof Member && db_member) {
         // if fields change, call the necessary functions to update the database
         // columns change too, so when CSV is altered come back here!
-        if (member.member_name != db_member.name) {
+        if (member.member_name && member.member_name != db_member.name) {
           update_name(member.member_id, member.member_name, db_member.name)
           members_updated.push(member.member_id)
         }
-        if (member.country != db_member.country) {
+        if (member.country && member.country != db_member.country) {
           update_country(member.member_id, member.country, db_member.country)
           members_updated.push(member.member_id)
         }
-        if (member.cohort != db_member.cohort) {
+        if (member.cohort && member.cohort != db_member.cohort) {
           update_cohort(member.member_id, member.cohort, db_member.cohort)
           members_updated.push(member.member_id)
         }
-        if (member.division != db_member.division) {
+        if (member.division && member.division != db_member.division) {
           update_division(member.member_id, member.division, db_member.division)
           members_updated.push(member.member_id)
         }
-        if (member.member_rank != db_member.rank) {
+        if (member.member_rank && member.member_rank != db_member.rank) {
           update_rank(member.member_id, member.member_rank, db_member.rank)
           members_updated.push(member.member_id)
         }
-        if (member.position != db_member.position) {
+        if (member.position && member.position != db_member.position) {
           update_position(member.member_id, member.position, db_member.position)
           members_updated.push(member.member_id)
         }
-        if (member.post_count != db_member.posts) {
+        if (member.post_count && member.post_count != db_member.posts) {
           update_posts(member.member_id, member.post_count, db_member.posts)
           members_updated.push(member.member_id)
         }
-        if (member.rep != db_member.rep) {
+        if (member.rep && member.rep != db_member.rep) {
           update_rep(member.member_id, member.rep, db_member.rep)
           members_updated.push(member.member_id)
         }
-        if (member.strikes != db_member.strikes) {
+        if (member.strikes && member.strikes != db_member.strikes) {
           update_strikes(member.member_id, member.strikes, db_member.strikes)
           members_updated.push(member.member_id)
         }
-        if (member.honors != db_member.hp) {
+        if (member.honors && member.honors != db_member.hp) {
           update_hp(member.member_id, member.honors, db_member.hp)
           members_updated.push(member.member_id)
         }
-        // create a date based on csv's field member.last_activity
-        // .toDateString() in order to compare only the date parts (csv vs db)
-        // that way we don't need to mess with timezones
-        member_forum_date = new Date(member.last_activity)
-        if (member_forum_date.toDateString() != db_member.last_forum_activity.toDateString()) {
-          update_last_forum_activity(member.member_id, member_forum_date.toJSON(), db_member.last_forum_activity.toJSON())
+        // convert database date to string without time to avoid timezone issues
+        db_member.last_forum_activity = extractDate(db_member.last_forum_activity)
+        if (member.last_activity && member.last_activity != db_member.last_forum_activity) {
+          update_last_forum_activity(member.member_id, member.last_activity, db_member.last_forum_activity)
           members_updated.push(member.member_id)
         }
-      }
-      else {
+      } else {
         member_inserted = await insert_member_into_db(member)
         if (member_inserted) {
           members_inserted.push(member_inserted)
@@ -138,6 +138,18 @@ async function insert_member_into_db(member) {
   if (member.member_id != '' && member.member_rank != 'Applicant') {
     is_already_in_db = await is_member_in_db(member.member_id)
     if (member instanceof Member && !is_already_in_db) {
+      if (!member.member_name) member.member_name = 'default_new_member'
+      if (!member.country) member.country = 'Country'
+      if (!member.cohort) member.cohort = 'Cohort'
+      if (!member.division) member.division = 'Division'
+      if (!member.member_rank) member.member_rank = 'Rank'
+      if (!member.position) member.position = 'Position'
+      if (!member.team) member.team = 'Team'
+      if (!member.post_count) member.post_count = '0'
+      if (!member.rep) member.rep = '0'
+      if (!member.strikes) member.strikes = '0'
+      if (!member.honors) member.honors = '0'
+      if (!member.events) member.events = '0'
       db_member = await db.insert_member(member)
     }
   }
@@ -155,7 +167,7 @@ const db_type_of_changes = ['name', 'country', 'cohort', 'house', 'division', 't
 
 /**
  *  update member fields
-**/
+ **/
 // update name
 function update_name(id, name, old_value) {
   db.update_name(id, name)
@@ -230,7 +242,7 @@ function update_hp(id, hp, old_value) {
 function update_last_forum_activity(id, last_forum_activity, old_value) {
   db.update_last_forum_activity(id, last_forum_activity)
   let type = db_type_of_changes.indexOf('last_forum_activity')
-  db.insert_history(today, id, type, old_value, last_forum_activity)
+  db.insert_history_activity(today, id, type, old_value, last_forum_activity)
 }
 
 // daily values
@@ -238,13 +250,21 @@ function update_last_forum_activity(id, last_forum_activity, old_value) {
 function update_latest_events_attended(id, events_attended, old_value) {
   if (old_value == null) old_value = 0
   let daily_value = events_attended - old_value
-  if ( csvDay == '01' ) {
+  if (csvDay == '01') {
     daily_value = events_attended
   }
   db.update_latest_events_attended(id, events_attended)
-  if (daily_value > 0 ) {
+  if (daily_value > 0) {
     db.insert_events_attended(today, id, daily_value)
   }
+}
+
+// extract date from date object and return string (without time)
+function extractDate(date) {
+  let date_array = [date.getFullYear(), date.getMonth()+1, date.getDate()]
+  let month = date_array[1] < 10 ? '0' + date_array[1] : date_array[1]
+  let day = date_array[2] < 10 ? '0' + date_array[2] : date_array[2]
+  return date_array[0] + '-' + month + '-' + day
 }
 
 // Member object
