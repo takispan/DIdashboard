@@ -10,15 +10,10 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
   let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
   for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate() + 1)) {
-    current_csv_date = current_date.toLocaleString('en-ZA', {
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
+    current_csv_date = extractDate(current_date)
     today = new Date(current_date.getTime())
-    csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date;
-    csvDay = csvUrl.substr(49)
+    csvDay = current_csv_date.substr(8,2)
+    csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date.substr(0,4) + "/" + current_csv_date.substr(5,2) + "/" + csvDay
     console.log("Fetching CSV [" + current_csv_date + "]...")
     const start = new Date()
     const members = await get_csv(csvUrl)
