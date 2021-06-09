@@ -91,7 +91,7 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.house && member.house != db_member.house) {
-          db.update_house(member.id, member.house, db_member.house)
+          update_house(member.id, member.house, db_member.house)
           members_updated.push(member.id)
         }
         if (member.division && member.division != db_member.division) {
@@ -103,7 +103,7 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.roster && member.roster != db_member.roster) {
-          db.update_roster(member.id, member.roster, db_member.roster)
+          update_roster(member.id, member.roster, db_member.roster)
           members_updated.push(member.id)
         }
         if (member.rank && member.rank != db_member.rank) {
