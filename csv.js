@@ -178,8 +178,8 @@ async function update_and_insert_members(members) {
           update_latest_recruits(member.id, member.recruits_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
-        if (member.comp_events_attended && member.comp_events_attended != db_member.latest_comp_events_attended) {
-          update_latest_comp_events_attended(member.id, member.comp_events_attended, db_member.latest_comp_events_attended)
+        if (member.comp_events_tm && member.comp_events_tm != db_member.latest_comp_events_attended) {
+          update_latest_comp_events_attended(member.id, member.comp_events_tm, db_member.latest_comp_events_attended)
           members_updated.push(member.id)
         }
       } else {
