@@ -10,15 +10,10 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
   let current_date = new Date(start_date.getTime())
   let current_csv_date, csvUrl
   for (start_date; current_date <= end_date; current_date.setDate(current_date.getDate() + 1)) {
-    current_csv_date = current_date.toLocaleString('en-ZA', {
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
+    current_csv_date = extractDate(current_date)
     today = new Date(current_date.getTime())
-    csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date
-    csvDay = csvUrl.substr(49)
+    csvDay = current_csv_date.substr(8, 2)
+    csvUrl = "https://api.dmg-inc.com/reports/download/" + current_csv_date.substr(0, 4) + "/" + current_csv_date.substr(5, 2) + "/" + csvDay
     console.log("Fetching CSV [" + current_csv_date + "]...")
     const start = new Date()
     const members = await get_csv(csvUrl)
@@ -78,7 +73,7 @@ async function update_and_insert_members(members) {
     members_inserted = []
   for (let i in members) {
     member = members[i]
-    if (member.id != '') {
+    if (member.id) {
       db_member = await is_member_in_db(member.id)
       if (member instanceof Member && db_member) {
         // if fields change, call the necessary functions to update the database
@@ -96,7 +91,7 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.house && member.house != db_member.house) {
-          db.update_house(member.id, member.house, db_member.house)
+          update_house(member.id, member.house, db_member.house)
           members_updated.push(member.id)
         }
         if (member.division && member.division != db_member.division) {
@@ -208,7 +203,7 @@ async function update_and_insert_members(members) {
 // insert members in database
 async function insert_member_into_db(member) {
   let is_already_in_db, db_member
-  if (member.id != '' && member.rank != 'Applicant') {
+  if (member.id) {
     is_already_in_db = await is_member_in_db(member.id)
     if (member instanceof Member && !is_already_in_db) {
       if (!member.name) member.name = 'default_new_member'
@@ -475,7 +470,7 @@ function update_latest_discord_hours(id, discord_hours, old_value) {
 
 // extract date from date object and return string (without time)
 function extractDate(date) {
-  let date_array = [date.getFullYear(), date.getMonth()+1, date.getDate()]
+  let date_array = [date.getFullYear(), date.getMonth() + 1, date.getDate()]
   let month = date_array[1] < 10 ? '0' + date_array[1] : date_array[1]
   let day = date_array[2] < 10 ? '0' + date_array[2] : date_array[2]
   return date_array[0] + '-' + month + '-' + day
