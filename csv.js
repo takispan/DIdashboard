@@ -163,11 +163,11 @@ async function update_and_insert_members(members) {
           update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
           members_updated.push(member.id)
         }
-        if (member.events_tm && member.events_tm != db_member.latest_events_attended) {
+        if (member.events_tm && member.events_tm != parseInt(db_member.latest_events_attended)) {
           update_latest_events_attended(member.id, member.events_tm, db_member.latest_events_attended)
           members_updated.push(member.id)
         }
-        if (member.events_hosted_tm && member.events_hosted_tm != db_member.latest_events_hosted) {
+        if (member.events_hosted_tm && member.events_hosted_tm != parseInt(db_member.latest_events_hosted)) {
           update_latest_events_hosted(member.id, member.events_hosted_tm, db_member.latest_events_hosted)
           members_updated.push(member.id)
         }
@@ -217,7 +217,6 @@ async function insert_member_into_db(member) {
       if (!member.events_tm) member.events_tm = '0'
       if (!member.events_hosted_tm) member.events_hosted_tm = '0'
       if (!member.recruits_tm) member.recruits_tm = '0'
-      if (!member.comp_events_tm) member.comp_events_tm = '0'
       if (!member.discord_hours_tm) member.discord_hours_tm = '0'
       db_member = await db.insert_member(member)
     }
@@ -427,19 +426,6 @@ function update_latest_recruits(id, recruits, old_value) {
   db.update_latest_recruits(id, recruits)
   if (daily_value > 0) {
     db.insert_recruits(today, id, daily_value)
-  }
-}
-
-// update comp events attended
-function update_latest_comp_events_attended(id, comp_events_attended, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = comp_events_attended - old_value
-  if (csvDay == '01') {
-    daily_value = comp_events_attended
-  }
-  db.update_latest_comp_events_attended(id, comp_events_attended)
-  if (daily_value > 0) {
-    db.insert_comp_events_attended(today, id, daily_value)
   }
 }
 
