@@ -422,8 +422,8 @@ async function insert_events_attended(today, id, daily_value) {
   try {
     const query = {
       name: 'insert-events_attended',
-      text: 'INSERT INTO public."Events_attended"(date, value, "memberID") VALUES($1, $2, $3) RETURNING *',
-      values: [today, daily_value, id],
+      text: 'INSERT INTO public."Events_attended"(date, total_events, casual_events, comp_events, coach_events, community_events, leadership_events, training_events, twitch_events, "memberID") VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      values: [today, daily_value, daily_value, 0, 0, 0, 0, 0, 0, id],
     }
     const res = await pool.query(query)
     return res.rows[0];
