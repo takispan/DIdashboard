@@ -25,8 +25,9 @@
 24. latest_events_attended
 25. latest_events_hosted
 26. latest_recruits
-27. latest_comp_events_attended
-28. latest_discord_hours
+27. latest_discord_hours
+28. latest_casual_events_attended
+29. latest_comp_events_attended
 
 ## CSV(v1) columns 2020/01/01 - 2020/01/11 (17 cols)
 1. member_id

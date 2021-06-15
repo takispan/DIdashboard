@@ -58,6 +58,16 @@ function get_csv(csvUrl) {
         member.last_forum_activity = extractDate(new Date(member.last_forum_activity))
         if (!member.last_discord_activity || member.last_discord_activity == 'Joined' || member.last_discord_activity == 'Never') member.last_discord_activity = '1970-01-01'
         member.last_discord_activity = extractDate(new Date(member.last_discord_activity))
+        // convert to float
+        member.events_tm = parseFloat(member.events_tm).toFixed(2)
+        if(isNaN(member.events_tm)) member.events_tm = '0.00'
+        member.comp_events_tm = parseFloat(member.comp_events_tm).toFixed(2)
+        if(isNaN(member.comp_events_tm)) member.comp_events_tm = '0.00'
+        member.total_events = parseFloat(parseFloat(member.events_tm) + parseFloat(member.comp_events_tm)).toFixed(2)
+        member.events_hosted_tm = parseFloat(member.events_hosted_tm).toFixed(2)
+        if(isNaN(member.events_hosted_tm)) member.events_hosted_tm = '0.00'
+        member.discord_hours_tm = parseFloat(member.discord_hours_tm).toFixed(2)
+        if(isNaN(member.discord_hours_tm)) member.discord_hours_tm = '0.00'
         members.push(member)
       });
       return members
@@ -167,8 +177,8 @@ async function update_and_insert_members(members) {
           update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
           members_updated.push(member.id)
         }
-        if (member.events_tm && member.events_tm != db_member.latest_events_attended) {
-          update_latest_events_attended(member.id, member.events_tm, db_member.latest_events_attended)
+        if (member.total_events && member.total_events != db_member.latest_events_attended) {
+          update_latest_events_attended(member.id, member.total_events, db_member.latest_events_attended, member.events_tm, db_member.latest_casual_events_attended, member.comp_events_tm, db_member.latest_comp_events_attended)
           members_updated.push(member.id)
         }
         if (member.events_hosted_tm && member.events_hosted_tm != db_member.latest_events_hosted) {
@@ -177,10 +187,6 @@ async function update_and_insert_members(members) {
         }
         if (member.recruits_tm && member.recruits_tm != db_member.latest_recruits) {
           update_latest_recruits(member.id, member.recruits_tm, db_member.latest_recruits)
-          members_updated.push(member.id)
-        }
-        if (member.comp_events_tm && member.comp_events_tm != db_member.latest_comp_events_attended) {
-          update_latest_comp_events_attended(member.id, member.comp_events_tm, db_member.latest_comp_events_attended)
           members_updated.push(member.id)
         }
         if (member.discord_hours_tm && member.discord_hours_tm != db_member.latest_discord_hours) {
@@ -226,11 +232,12 @@ async function insert_member_into_db(member) {
       if (!member.vanguard) member.vanguard = 'Vanguard'
       if (!member.reliability) member.reliability = '0'
       if (!member.rep_tm) member.rep_tm = '0'
-      if (!member.events_tm) member.events_tm = '0'
-      if (!member.events_hosted_tm) member.events_hosted_tm = '0'
+      if (!member.total_events) member.total_events = '0.00'
+      if (!member.events_hosted_tm) member.events_hosted_tm = '0.00'
       if (!member.recruits_tm) member.recruits_tm = '0'
-      if (!member.comp_events_tm) member.comp_events_tm = '0'
-      if (!member.discord_hours_tm) member.discord_hours_tm = '0'
+      if (!member.events_tm) member.events_tm = '0.00'
+      if (!member.comp_events_tm) member.comp_events_tm = '0.00'
+      if (!member.discord_hours_tm) member.discord_hours_tm = '0.00'
       db_member = await db.insert_member(member)
     }
   }
@@ -404,15 +411,18 @@ function update_latest_rep_earned(id, rep_earned, old_value) {
 }
 
 // update events attended
-function update_latest_events_attended(id, events_attended, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = events_attended - old_value
+function update_latest_events_attended(id, events_attended, old_value, casual, old_casual, comp, old_comp) {
+  let total_daily_value = events_attended - old_value
+  let casual_daily_value = casual - old_casual
+  let comp_daily_value = comp - old_comp
   if (csvDay == '01') {
-    daily_value = events_attended
+    total_daily_value = events_attended
+    casual_daily_value = casual
+    comp_daily_value = comp
   }
-  db.update_latest_events_attended(id, events_attended)
-  if (daily_value > 0) {
-    db.insert_events_attended(today, id, daily_value)
+  db.update_latest_events_attended(id, events_attended, casual, comp)
+  if (total_daily_value > 0) {
+    db.insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value)
   }
 }
 
@@ -439,19 +449,6 @@ function update_latest_recruits(id, recruits, old_value) {
   db.update_latest_recruits(id, recruits)
   if (daily_value > 0) {
     db.insert_recruits(today, id, daily_value)
-  }
-}
-
-// update comp events attended
-function update_latest_comp_events_attended(id, comp_events_attended, old_value) {
-  if (old_value == null) old_value = 0
-  let daily_value = comp_events_attended - old_value
-  if (csvDay == '01') {
-    daily_value = comp_events_attended
-  }
-  db.update_latest_comp_events_attended(id, comp_events_attended)
-  if (daily_value > 0) {
-    db.insert_comp_events_attended(today, id, daily_value)
   }
 }
 

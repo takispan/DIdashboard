@@ -37,8 +37,8 @@ async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',
-      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_comp_events_attended, latest_discord_hours) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) RETURNING *',
-      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.events_tm, member.events_hosted_tm, member.recruits_tm, member.comp_events_tm, member.discord_hours_tm],
+      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_discord_hours, latest_casual_events_attended, latest_comp_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) RETURNING *',
+      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.total_events, member.events_hosted_tm, member.recruits_tm, member.discord_hours_tm, member.events_tm, member.comp_events_tm],
     }
     const res = await pool.query(query)
     return res.rows[0]
@@ -446,12 +446,12 @@ async function update_latest_rep_earned(id, latest_rep_earned) {
 }
 
 // update latest_events_attended
-async function update_latest_events_attended(id, latest_events_attended) {
+async function update_latest_events_attended(id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended) {
   try {
     const query = {
       name: 'update-latest_events_attended',
-      text: 'UPDATE public."Members" SET latest_events_attended=$2 WHERE id=$1',
-      values: [id, latest_events_attended],
+      text: 'UPDATE public."Members" SET latest_events_attended=$2, latest_casual_events_attended=$3, latest_comp_events_attended=$4 WHERE id=$1',
+      values: [id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended],
     }
     const res = await pool.query(query)
     return res.rows[0];
@@ -493,22 +493,6 @@ async function update_latest_recruits(id, latest_recruits) {
   }
 }
 
-// update latest_comp_events_attended
-async function update_latest_comp_events_attended(id, latest_comp_events_attended) {
-  try {
-    const query = {
-      name: 'update-latest_comp_events_attended',
-      text: 'UPDATE public."Members" SET latest_comp_events_attended=$2 WHERE id=$1',
-      values: [id, latest_comp_events_attended],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_latest_comp_events_attended)")
-  }
-}
-
 // update latest_discord_hours
 async function update_latest_discord_hours(id, latest_discord_hours) {
   try {
@@ -543,12 +527,12 @@ async function insert_rep_earned(today, id, daily_value) {
 }
 
 // insert events_attended
-async function insert_events_attended(today, id, daily_value) {
+async function insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value) {
   try {
     const query = {
       name: 'insert-events_attended',
-      text: 'INSERT INTO public."Events_attended"(date, value, "memberID") VALUES($1, $2, $3) RETURNING *',
-      values: [today, daily_value, id],
+      text: 'INSERT INTO public."Events_attended"(date, total_events, casual_events, comp_events, "memberID") VALUES($1, $2, $3, $4, $5) RETURNING *',
+      values: [today, total_daily_value, casual_daily_value, comp_daily_value, id],
     }
     const res = await pool.query(query)
     return res.rows[0];
@@ -587,22 +571,6 @@ async function insert_recruits(today, id, daily_value) {
   } catch (err) {
     console.log(err.stack)
     console.log("Error (insert_recruits)")
-  }
-}
-
-// insert comp_events_attended
-async function insert_comp_events_attended(today, id, daily_value) {
-  try {
-    const query = {
-      name: 'insert-comp_events_attended',
-      text: 'INSERT INTO public."Comp_events_attended"(date, value, "memberID") VALUES($1, $2, $3) RETURNING *',
-      values: [today, daily_value, id],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (insert_comp_events_attended)")
   }
 }
 
@@ -655,12 +623,10 @@ module.exports = {
   update_latest_events_attended,
   update_latest_events_hosted,
   update_latest_recruits,
-  update_latest_comp_events_attended,
   update_latest_discord_hours,
   insert_rep_earned,
   insert_events_attended,
   insert_events_hosted,
   insert_recruits,
-  insert_comp_events_attended,
   insert_discord_hours,
 };
