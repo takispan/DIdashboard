@@ -189,38 +189,6 @@ async function update_division(id, division) {
   }
 }
 
-// update team
-async function update_team(id, team) {
-  try {
-    const query = {
-      name: 'update-team',
-      text: 'UPDATE public."Members" SET team=$2 WHERE id=$1',
-      values: [id, team],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error (update_team)")
-  }
-}
-
-// update roster
-async function update_roster(id, roster) {
-  try {
-    const query = {
-      name: 'update-roster',
-      text: 'UPDATE public."Members" SET roster=$2 WHERE id=$1',
-      values: [id, roster],
-    }
-    const res = await pool.query(query)
-    return res.rows[0];
-  } catch (err) {
-    console.log(err.stack)
-    console.log("Error bish (update_roster)")
-  }
-}
-
 // update rank
 async function update_rank(id, rank) {
   try {
@@ -604,8 +572,6 @@ module.exports = {
   update_cohort,
   update_house,
   update_division,
-  update_team,
-  update_roster,
   update_rank,
   update_position,
   update_posts,

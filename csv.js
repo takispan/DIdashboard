@@ -2,8 +2,8 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const csv_start_day = new Date(Date.UTC(2020, 11, 17))
-const csv_end_date = new Date(Date.UTC(2021, 4, 7))
+const csv_start_day = new Date(Date.UTC(2021, 4, 9))
+const csv_end_date = new Date(Date.UTC(2021, 5, 6))
 let csvDay, today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
@@ -22,7 +22,7 @@ async function import_csv(start_date, end_date = new Date(start_date.getTime()))
     const all_db_changes = await update_and_insert_members(members)
     const new_members = all_db_changes[0]
     const updated_fields = all_db_changes[1]
-    const updated_members = [...new Set(updated_fields)];
+    const updated_members = [...new Set(updated_fields)]
     console.log("Done!")
     console.log("Inserted " + new_members.length + " new members into database")
     console.log("Updated " + updated_fields.length + " fields from " + updated_members.length + " members in database")
@@ -106,14 +106,6 @@ async function update_and_insert_members(members) {
         }
         if (member.division && member.division != db_member.division) {
           update_division(member.id, member.division, db_member.division)
-          members_updated.push(member.id)
-        }
-        if (member.team && member.team != db_member.team) {
-          update_team(member.id, member.team, db_member.team)
-          members_updated.push(member.id)
-        }
-        if (member.roster && member.roster != db_member.roster) {
-          update_roster(member.id, member.roster, db_member.roster)
           members_updated.push(member.id)
         }
         if (member.rank && member.rank != db_member.rank) {
@@ -289,20 +281,6 @@ function update_division(id, division, old_value) {
   db.update_division(id, division)
   let type = db_type_of_changes.indexOf('division')
   db.insert_history(today, id, type, old_value, division)
-}
-
-// update team
-function update_team(id, team, old_value) {
-  db.update_team(id, team)
-  let type = db_type_of_changes.indexOf('team')
-  db.insert_history(today, id, type, old_value, team)
-}
-
-// update roster
-function update_roster(id, roster, old_value) {
-  db.update_roster(id, roster)
-  let type = db_type_of_changes.indexOf('roster')
-  db.insert_history(today, id, type, old_value, roster)
 }
 
 // update rank
