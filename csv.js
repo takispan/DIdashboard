@@ -2,8 +2,8 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const csv_start_day = new Date(Date.UTC(2021, 4, 9))
-const csv_end_date = new Date(Date.UTC(2021, 5, 6))
+const csv_start_day = new Date(Date.UTC(2021, 5, 7))
+const csv_end_date = new Date(Date.UTC(2021, 5, 8))
 let csvDay, today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
@@ -46,8 +46,7 @@ function get_csv(csvUrl) {
         Object.assign(member, row) // Assign json to the new Member
         if (!member.skill_tier) {
           member.skill_tier = '0'
-        }
-        else {
+        } else {
           member.skill_tier = member.skill_tier.substr(5, 1)
           if (isNaN(parseInt(member.skill_tier, 10))) member.skill_tier = '0'
         }
@@ -58,16 +57,19 @@ function get_csv(csvUrl) {
         member.last_forum_activity = extractDate(new Date(member.last_forum_activity))
         if (!member.last_discord_activity || member.last_discord_activity == 'Joined' || member.last_discord_activity == 'Never') member.last_discord_activity = '1970-01-01'
         member.last_discord_activity = extractDate(new Date(member.last_discord_activity))
-        // convert to float
-        member.events_tm = parseFloat(member.events_tm).toFixed(2)
-        if(isNaN(member.events_tm)) member.events_tm = '0.00'
-        member.comp_events_tm = parseFloat(member.comp_events_tm).toFixed(2)
-        if(isNaN(member.comp_events_tm)) member.comp_events_tm = '0.00'
-        member.total_events = parseFloat(parseFloat(member.events_tm) + parseFloat(member.comp_events_tm)).toFixed(2)
-        member.events_hosted_tm = parseFloat(member.events_hosted_tm).toFixed(2)
-        if(isNaN(member.events_hosted_tm)) member.events_hosted_tm = '0.00'
-        member.discord_hours_tm = parseFloat(member.discord_hours_tm).toFixed(2)
-        if(isNaN(member.discord_hours_tm)) member.discord_hours_tm = '0.00'
+        // convert secs to hours
+        member.casual_events = Math.round(((member.casual_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.coach_events = Math.round(((member.coach_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.community_events = Math.round(((member.community_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.comp_events = Math.round(((member.comp_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.leadership_events = Math.round(((member.leadership_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.training_events = Math.round(((member.training_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.twitch_events = Math.round(((member.twitch_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.events_hosted = Math.round(((member.host_event_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        member.discord_hours = Math.round(((member.discord_secs_tm / 3600) + Number.EPSILON) * 100) / 100
+        // calculate total events attended
+        member.total_events = member.casual_events + member.coach_events + member.community_events + member.comp_events + member.leadership_events + member.training_events + member.twitch_events
+        member.total_events = Math.round((member.total_events + Number.EPSILON) * 100) / 100
         members.push(member)
       });
       return members
@@ -170,19 +172,19 @@ async function update_and_insert_members(members) {
           members_updated.push(member.id)
         }
         if (member.total_events && member.total_events != db_member.latest_events_attended) {
-          update_latest_events_attended(member.id, member.total_events, db_member.latest_events_attended, member.events_tm, db_member.latest_casual_events_attended, member.comp_events_tm, db_member.latest_comp_events_attended)
+          update_latest_events_attended(member.id, member.total_events, db_member.latest_events_attended, member.casual_events, db_member.latest_casual_events_attended, member.comp_events, db_member.latest_comp_events_attended, member.coach_events, db_member.latest_coach_events_attended, member.community_events, db_member.latest_community_events_attended, member.leadership_events, db_member.latest_leadership_events_attended, member.training_events, db_member.latest_training_events_attended, member.twitch_events, db_member.latest_twitch_events_attended)
           members_updated.push(member.id)
         }
-        if (member.events_hosted_tm && member.events_hosted_tm != db_member.latest_events_hosted) {
-          update_latest_events_hosted(member.id, member.events_hosted_tm, db_member.latest_events_hosted)
+        if (member.events_hosted && member.events_hosted != db_member.latest_events_hosted) {
+          update_latest_events_hosted(member.id, member.events_hosted, db_member.latest_events_hosted)
           members_updated.push(member.id)
         }
         if (member.recruits_tm && member.recruits_tm != db_member.latest_recruits) {
           update_latest_recruits(member.id, member.recruits_tm, db_member.latest_recruits)
           members_updated.push(member.id)
         }
-        if (member.discord_hours_tm && member.discord_hours_tm != db_member.latest_discord_hours) {
-          update_latest_discord_hours(member.id, member.discord_hours_tm, db_member.latest_discord_hours)
+        if (member.discord_hours && member.discord_hours != db_member.latest_discord_hours) {
+          update_latest_discord_hours(member.id, member.discord_hours, db_member.latest_discord_hours)
           members_updated.push(member.id)
         }
       } else {
@@ -225,11 +227,16 @@ async function insert_member_into_db(member) {
       if (!member.reliability) member.reliability = '0'
       if (!member.rep_tm) member.rep_tm = '0'
       if (!member.total_events) member.total_events = '0.00'
-      if (!member.events_hosted_tm) member.events_hosted_tm = '0.00'
+      if (!member.events_hosted) member.events_hosted = '0.00'
       if (!member.recruits_tm) member.recruits_tm = '0'
-      if (!member.events_tm) member.events_tm = '0.00'
-      if (!member.comp_events_tm) member.comp_events_tm = '0.00'
-      if (!member.discord_hours_tm) member.discord_hours_tm = '0.00'
+      if (!member.discord_hours) member.discord_hours = '0.00'
+      if (!member.casual_events) member.casual_events = '0.00'
+      if (!member.comp_events) member.comp_events = '0.00'
+      if (!member.coach_events) member.coach_events = '0.00'
+      if (!member.community_events) member.community_events = '0.00'
+      if (!member.leadership_events) member.leadership_events = '0.00'
+      if (!member.training_events) member.training_events = '0.00'
+      if (!member.twitch_events) member.twitch_events = '0.00'
       db_member = await db.insert_member(member)
     }
   }
@@ -389,18 +396,28 @@ function update_latest_rep_earned(id, rep_earned, old_value) {
 }
 
 // update events attended
-function update_latest_events_attended(id, events_attended, old_value, casual, old_casual, comp, old_comp) {
+function update_latest_events_attended(id, events_attended, old_value, casual, old_casual, comp, old_comp, coach, old_coach, community, old_community, leadership, old_leadership, training, old_training, twitch, old_twitch) {
   let total_daily_value = events_attended - old_value
   let casual_daily_value = casual - old_casual
   let comp_daily_value = comp - old_comp
+  let coach_daily_value = coach - old_coach
+  let community_daily_value = community - old_community
+  let leadership_daily_value = leadership - old_leadership
+  let training_daily_value = training - old_training
+  let twitch_daily_value = twitch - old_twitch
   if (csvDay == '01') {
     total_daily_value = events_attended
     casual_daily_value = casual
     comp_daily_value = comp
+    coach_daily_value = coach
+    community_daily_value = community
+    leadership_daily_value = leadership
+    training_daily_value = training
+    twitch_daily_value = twitch
   }
-  db.update_latest_events_attended(id, events_attended, casual, comp)
+  db.update_latest_events_attended(id, events_attended, casual, comp, coach, community, leadership, training, twitch)
   if (total_daily_value > 0) {
-    db.insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value)
+    db.insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value, coach_daily_value, community_daily_value, leadership_daily_value, training_daily_value, twitch_daily_value)
   }
 }
 

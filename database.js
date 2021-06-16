@@ -37,8 +37,8 @@ async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',
-      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_discord_hours, latest_casual_events_attended, latest_comp_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29) RETURNING *',
-      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.total_events, member.events_hosted_tm, member.recruits_tm, member.discord_hours_tm, member.events_tm, member.comp_events_tm],
+      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_discord_hours, latest_casual_events_attended, latest_comp_events_attended, latest_coach_events_attended, latest_community_events_attended, latest_leadership_events_attended, latest_training_events_attended, latest_twitch_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34) RETURNING *',
+      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.total_events, member.events_hosted, member.recruits_tm, member.discord_hours, member.casual_events, member.comp_events, member.coach_events, member.community_events, member.leadership_events, member.training_events, member.twitch_events],
     }
     const res = await pool.query(query)
     return res.rows[0]
@@ -414,12 +414,12 @@ async function update_latest_rep_earned(id, latest_rep_earned) {
 }
 
 // update latest_events_attended
-async function update_latest_events_attended(id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended) {
+async function update_latest_events_attended(id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended, latest_coach_events_attended, latest_community_events_attended, latest_leadership_events_attended, latest_training_events_attended, latest_twitch_events_attended) {
   try {
     const query = {
       name: 'update-latest_events_attended',
-      text: 'UPDATE public."Members" SET latest_events_attended=$2, latest_casual_events_attended=$3, latest_comp_events_attended=$4 WHERE id=$1',
-      values: [id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended],
+      text: 'UPDATE public."Members" SET latest_events_attended=$2, latest_casual_events_attended=$3, latest_comp_events_attended=$4, latest_coach_events_attended=$5, latest_community_events_attended=$6, latest_leadership_events_attended=$7, latest_training_events_attended=$8, latest_twitch_events_attended=$9 WHERE id=$1',
+      values: [id, latest_events_attended, latest_casual_events_attended, latest_comp_events_attended, latest_coach_events_attended, latest_community_events_attended, latest_leadership_events_attended, latest_training_events_attended, latest_twitch_events_attended],
     }
     const res = await pool.query(query)
     return res.rows[0];
@@ -495,12 +495,12 @@ async function insert_rep_earned(today, id, daily_value) {
 }
 
 // insert events_attended
-async function insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value) {
+async function insert_events_attended(today, id, total_daily_value, casual_daily_value, comp_daily_value, coach_daily_value, community_daily_value, leadership_daily_value, training_daily_value, twitch_daily_value) {
   try {
     const query = {
       name: 'insert-events_attended',
-      text: 'INSERT INTO public."Events_attended"(date, total_events, casual_events, comp_events, "memberID") VALUES($1, $2, $3, $4, $5) RETURNING *',
-      values: [today, total_daily_value, casual_daily_value, comp_daily_value, id],
+      text: 'INSERT INTO public."Events_attended"(date, total_events, casual_events, comp_events, coach_events, community_events, leadership_events, training_events, twitch_events, "memberID") VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      values: [today, total_daily_value, casual_daily_value, comp_daily_value, coach_daily_value, community_daily_value, leadership_daily_value, training_daily_value, twitch_daily_value, id],
     }
     const res = await pool.query(query)
     return res.rows[0];

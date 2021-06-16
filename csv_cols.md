@@ -1,13 +1,14 @@
 ## Database columns (Members table)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. team
-9. roster
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  team
+9.  roster
 10. rank
 11. position
 12. posts
@@ -30,15 +31,18 @@
 29. latest_comp_events_attended
 
 ## CSV(v1) columns 2020/01/01 - 2020/01/11 (17 cols)
-1. member_id
-2. member_name
-3. country
-4. joined
-5. last_activity
-6. cohort
-7. mentor
-8. post_count
-9. rep
+
+#### All columns
+
+1.  member_id
+2.  member_name
+3.  country
+4.  joined
+5.  last_activity
+6.  cohort
+7.  mentor
+8.  post_count
+9.  rep
 10. strikes
 11. division
 12. team
@@ -49,15 +53,55 @@
 17. events
 
 ## CSV(v2) columns 2020/01/12 - 2020/04/01 (35 cols)
-1. id
-2. name
-3. country
-4. joined
-5. last_act
-6. cohort
-7. mentor
-8. house
-9. division
+
+#### Changes
+
+\- member_id  
+\- member_name  
+\- last_act  
+\- post_count  
+\- member_rank  
+\- honors  
+\- commendations  
+\- events  
+\+ id  
+\+ name  
+\+ last_activity  
+\+ house  
+\+ roster  
+\+ rank  
+\+ posts  
+\+ posts_tw  
+\+ posts_lw  
+\+ posts_tm  
+\+ posts_lm  
+\+ rep_tm  
+\+ rep_lm  
+\+ hp  
+\+ disc_tw  
+\+ disc_lw  
+\+ ev_tw  
+\+ ev_lw  
+\+ ev_tm  
+\+ ev_lm  
+\+ events_hosted  
+\+ events_hosted_tm  
+\+ events_hosted_lm  
+\+ rec  
+\+ rec_tm  
+\+ rec_lm  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  last_act
+6.  cohort
+7.  mentor
+8.  house
+9.  division
 10. team
 11. roster
 12. rank
@@ -86,15 +130,51 @@
 35. rec_lm
 
 ## CSV(v3) columns 2020/04/02 - 2020/09/05 (29 cols)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. team
-9. roster
+
+#### Changes
+
+\- last_act  
+\- mentor  
+\- posts_tw  
+\- posts_lw  
+\- posts_tm  
+\- posts_lm  
+\- disc_tw  
+\- disc_lw  
+\- ev_tw  
+\- ev_lw  
+\- ev_tm  
+\- ev_lm  
+\- ev_hosted  
+\- ev_hosted_tm  
+\- ev_hosted_lm  
+\- rec  
+\- rec_tm  
+\- rec_lm  
+\+ manager  
+\+ primary_game  
+\+ skill_tier  
+\+ vanguard  
+\+ last_forum_activity  
+\+ last_discord_activity  
+\+ events_tm  
+\+ events_lm  
+\+ events_hosted_tm  
+\+ events_hosted_lm  
+\+ recruits_tm  
+\+ recruits_lm  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  team
+9.  roster
 10. rank
 11. position
 12. posts
@@ -117,15 +197,24 @@
 29. recruits_lm
 
 ## CSV(v4) columns 2020/09/06 - 2020/12/16 (32 cols)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. team
-9. roster
+
+#### Changes
+
+\+ reliability  
+\+ comp_events_tm  
+\+ comp_events_lm  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  team
+9.  roster
 10. rank
 11. position
 12. posts
@@ -151,15 +240,23 @@
 32. comp_events_lm
 
 ## CSV(v5) columns 2020/12/17 - 2021/05/07 (34 cols)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. team
-9. roster
+
+#### Changes
+
+\+ discord_hours_tm  
+\+ discord_hours_lm  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  team
+9.  roster
 10. rank
 11. position
 12. posts
@@ -187,15 +284,23 @@
 34. discord_hours_lm
 
 ## CSV(v6) columns 2021/05/09 - 2021/06/06 (32 cols)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. rank
-9. position
+
+#### Changes
+
+\- team  
+\- roster  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  rank
+9.  position
 10. posts
 11. rep
 12. strikes
@@ -220,16 +325,48 @@
 31. discord_hours_tm
 32. discord_hours_lm
 
-## CSV(v7) columns 2021/06/07 - [latest] (43 cols)
-1. id
-2. name
-3. country
-4. joined
-5. cohort
-6. house
-7. division
-8. rank
-9. title
+## CSV(v7) columns 2021/06/07 - 2021/06/08 (43 cols)
+
+#### Changes
+
+\- events_tm  
+\- events_lm  
+\- events_hosted_tm  
+\- events_hosted_lm  
+\- comp_events_tm  
+\- comp_events_lm  
+\- discord_hours_tm  
+\- discord_hours_lm  
+\+ casual_event_secs_tm  
+\+ casual_event_secs_lm  
+\+ coach_event_secs_tm  
+\+ coach_event_secs_lm  
+\+ community_event_secs_tm  
+\+ community_event_secs_lm  
+\+ comp_event_secs_tm  
+\+ comp_event_secs_lm  
+\+ leadership_event_secs_tm  
+\+ leadership_event_secs_lm  
+\+ training_event_secs_tm  
+\+ training_event_secs_lm  
+\+ twitch_event_secs_tm  
+\+ twitch_event_secs_lm  
+\+ host_event_secs_tm  
+\+ host_event_secs_lm  
+\+ discord_secs_tm  
+\+ discord_secs_lm  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  rank
+9.  title
 10. position
 11. posts
 12. rep
@@ -264,3 +401,56 @@
 41. reliability
 42. discord_secs_tm
 43. discord_secs_lm
+
+## CSV(v8) columns 2021/06/09 - [latest] (44 cols)
+
+#### Changes
+
+\+ event_host_license  
+
+#### All columns
+
+1.  id
+2.  name
+3.  country
+4.  joined
+5.  cohort
+6.  house
+7.  division
+8.  rank
+9.  title
+10. position
+11. posts
+12. rep
+13. strikes
+14. hp
+15. manager
+16. primary_game
+17. skill_tier
+18. vanguard
+19. last_forum_activity
+20. last_discord_activity
+21. rep_tm
+22. rep_lm
+23. casual_event_secs_tm
+24. casual_event_secs_lm
+25. coach_event_secs_tm
+26. coach_event_secs_lm
+27. community_event_secs_tm
+28. community_event_secs_lm
+29. comp_event_secs_tm
+30. comp_event_secs_lm
+31. leadership_event_secs_tm
+32. leadership_event_secs_lm
+33. training_event_secs_tm
+34. training_event_secs_lm
+35. twitch_event_secs_tm
+36. twitch_event_secs_lm
+37. host_event_secs_tm
+38. host_event_secs_lm
+39. recruits_tm
+40. recruits_lm
+41. reliability
+42. discord_secs_tm
+43. discord_secs_lm
+44. event_host_license
