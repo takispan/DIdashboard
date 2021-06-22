@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Discord OAuth2 App</title>
+</head>
+<body>
+	<div id="info">
+	<img id="gif" src="https://i.giphy.com/media/fnuSiwXMTV3zmYDf6k/giphy.webp" style="margin: auto; display: block; margin-top: 10%;">
+	</div>
+
+	<div class="content" style="display: table; margin: auto; margin-top: 2em; justify-content: center;">
+	<a id="login" href="https://discord.com/oauth2/authorize?client_id=856526516660994079&response_type=code&scope=guilds%20identify">Identify Yourself</a>
+	<p>You're logged in as: <span="user">Blank</span></p>
+	<p id="check"></p>
+	<a id="logout" href="http://localhost:3000">Logout</a>
+	</div>
+
+	<script>
+
+	const url = window.location.href
+	//Regex [a-z]+$ get only true or false value
+	let regexstate = /[a-z]+$/im;
+  let state = regexstate.test(url);
+
+	//Checks if user is in Discord
+	if (state == true) {
+		document.getElementById("check").innerHTML = "Is in Discord";
+		document.getElementById("gif").src = "https://i.giphy.com/media/Nx0rz3jtxtEre/giphy.webp";
+	} else {
+		document.getElementById("check").innerHTML = "Is not in Discord";
+	}
+
+	//Note for later purposes: Contains every word character after = between one and unlimited times  (?<==)\w+
+
+
+	console.log(results);
+	</script>
+</body>
+</html>
