@@ -37,8 +37,8 @@ async function insert_member(member) {
   try {
     const query = {
       name: 'insert-member',
-      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_discord_hours, latest_casual_events_attended, latest_comp_events_attended, latest_coach_events_attended, latest_community_events_attended, latest_leadership_events_attended, latest_training_events_attended, latest_twitch_events_attended) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34) RETURNING *',
-      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.total_events, member.events_hosted, member.recruits_tm, member.discord_hours, member.casual_events, member.comp_events, member.coach_events, member.community_events, member.leadership_events, member.training_events, member.twitch_events],
+      text: 'INSERT INTO public."Members"(id, name, country, joined, cohort, house, division, team, roster, rank, position, posts, rep, strikes, hp, manager, primary_game, skill_tier, vanguard, last_forum_activity, last_discord_activity, reliability, latest_rep_earned, latest_events_attended, latest_events_hosted, latest_recruits, latest_discord_hours, latest_casual_events_attended, latest_comp_events_attended, latest_coach_events_attended, latest_community_events_attended, latest_leadership_events_attended, latest_training_events_attended, latest_twitch_events_attended, event_host_license) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35) RETURNING *',
+      values: [member.id, member.name, member.country, member.joined, member.cohort, member.house, member.division, member.team, member.roster, member.rank, member.position, member.posts, member.rep, member.strikes, member.hp, member.manager, member.primary_game, member.skill_tier, member.vanguard, member.last_forum_activity, member.last_discord_activity, member.reliability, member.rep_tm, member.total_events, member.events_hosted, member.recruits_tm, member.discord_hours, member.casual_events, member.comp_events, member.coach_events, member.community_events, member.leadership_events, member.training_events, member.twitch_events, member.event_host_license],
     }
     const res = await pool.query(query)
     return res.rows[0]
@@ -397,6 +397,22 @@ async function update_reliability(id, reliability) {
   }
 }
 
+// update update_event_host_license
+async function update_event_host_license(id, event_host_license) {
+  try {
+    const query = {
+      name: 'update-event_host_license',
+      text: 'UPDATE public."Members" SET event_host_license=$2 WHERE id=$1',
+      values: [id, event_host_license],
+    }
+    const res = await pool.query(query)
+    return res.rows[0];
+  } catch (err) {
+    console.log(err.stack)
+    console.log("Error (update_event_host_license)")
+  }
+}
+
 // update latest_rep_earned
 async function update_latest_rep_earned(id, latest_rep_earned) {
   try {
@@ -585,6 +601,7 @@ module.exports = {
   update_last_forum_activity,
   update_last_discord_activity,
   update_reliability,
+  update_event_host_license,
   update_latest_rep_earned,
   update_latest_events_attended,
   update_latest_events_hosted,

@@ -2,8 +2,8 @@ const getCSV = require('get-csv')
 const db = require('./database')
 
 // South African uses year-month-day order and 24-hour time
-const csv_start_day = new Date(Date.UTC(2021, 5, 7))
-const csv_end_date = new Date(Date.UTC(2021, 5, 8))
+const csv_start_day = new Date(Date.UTC(2021, 5, 9))
+const csv_end_date = new Date(Date.UTC(2021, 5, 15))
 let csvDay, today
 
 async function import_csv(start_date, end_date = new Date(start_date.getTime())) {
@@ -70,6 +70,8 @@ function get_csv(csvUrl) {
         // calculate total events attended
         member.total_events = member.casual_events + member.coach_events + member.community_events + member.comp_events + member.leadership_events + member.training_events + member.twitch_events
         member.total_events = Math.round((member.total_events + Number.EPSILON) * 100) / 100
+        // event_host_license
+        if (!member.event_host_license) member.event_host_license = 'Inactive'
         members.push(member)
       });
       return members
@@ -166,6 +168,10 @@ async function update_and_insert_members(members) {
           update_reliability(member.id, member.reliability, db_member.reliability)
           members_updated.push(member.id)
         }
+        if (member.event_host_license && member.event_host_license != db_member.event_host_license) {
+          update_event_host_license(member.id, member.event_host_license, db_member.event_host_license)
+          members_updated.push(member.id)
+        }
         // daily values!
         if (member.rep_tm && member.rep_tm != db_member.latest_rep_earned) {
           update_latest_rep_earned(member.id, member.rep_tm, db_member.latest_rep_earned)
@@ -250,7 +256,7 @@ async function is_member_in_db(id) {
 }
 
 // array to be used for member_history table in database
-const db_type_of_changes = ['name', 'country', 'cohort', 'house', 'division', 'team', 'roster', 'rank', 'position', 'posts', 'rep', 'strikes', 'hp', 'manager', 'primary_game', 'skill_tier', 'vanguard', 'last_forum_activity', 'last_discord_activity', 'reliability']
+const db_type_of_changes = ['name', 'country', 'cohort', 'house', 'division', 'team', 'roster', 'rank', 'position', 'posts', 'rep', 'strikes', 'hp', 'manager', 'primary_game', 'skill_tier', 'vanguard', 'last_forum_activity', 'last_discord_activity', 'reliability', 'event_host_license']
 
 /**
  *  update member fields
@@ -379,6 +385,13 @@ function update_reliability(id, reliability, old_value) {
   db.update_reliability(id, reliability)
   let type = db_type_of_changes.indexOf('reliability')
   db.insert_history(today, id, type, old_value, reliability)
+}
+
+// update event_host_license
+function update_event_host_license(id, event_host_license, old_value) {
+  db.update_event_host_license(id, event_host_license)
+  let type = db_type_of_changes.indexOf('event_host_license')
+  db.insert_history(today, id, type, old_value, event_host_license)
 }
 
 // daily values
